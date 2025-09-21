@@ -5,11 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Voice AI Platform - Dashboard</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
         <div class="container">
             <a class="navbar-brand" href="#">Voice AI Platform</a>
+            <div class="navbar-nav ms-auto">
+                <div class="nav-item d-flex align-items-center me-3">
+                    <span class="text-light me-2">Session:</span>
+                    <span id="sessionStatus" class="badge bg-success">Active</span>
+                    <span id="sessionTimer" class="text-light ms-2 small">30:00</span>
+                </div>
+                <button type="button" class="btn btn-outline-light btn-sm" id="logoutBtn">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
+            </div>
         </div>
     </nav>
 
@@ -27,6 +38,152 @@
                         <li>Appointment Management</li>
                         <li>Security and Audit Logging</li>
                     </ul>
+                </div>
+
+                <!-- Appointments Section -->
+                <div class="card mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Appointment Management</h5>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-sm btn-outline-primary" id="refreshAppointmentsBtn">
+                                <i class="fas fa-sync-alt"></i> Refresh
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <!-- Filters Row -->
+                        <div class="row mb-3">
+                            <div class="col-md-3">
+                                <label for="providerFilter" class="form-label">Provider</label>
+                                <select class="form-select" id="providerFilter">
+                                    <option value="">All Providers</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label for="startDate" class="form-label">Start Date</label>
+                                <input type="date" class="form-control" id="startDate">
+                            </div>
+                            <div class="col-md-2">
+                                <label for="endDate" class="form-label">End Date</label>
+                                <input type="date" class="form-control" id="endDate">
+                            </div>
+                            <div class="col-md-2">
+                                <label for="statusFilter" class="form-label">Status</label>
+                                <select class="form-select" id="statusFilter">
+                                    <option value="">All Statuses</option>
+                                    <option value="booked">Booked</option>
+                                    <option value="arrived">Arrived</option>
+                                    <option value="fulfilled">Fulfilled</option>
+                                    <option value="cancelled">Cancelled</option>
+                                    <option value="noshow">No Show</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3 d-flex align-items-end gap-2">
+                                <button type="button" class="btn btn-primary" id="todayBtn">Today</button>
+                                <button type="button" class="btn btn-outline-secondary" id="tomorrowBtn">Tomorrow</button>
+                                <button type="button" class="btn btn-outline-secondary" id="thisWeekBtn">This Week</button>
+                            </div>
+                        </div>
+
+                        <!-- Appointment Display -->
+                        <div id="appointmentSection">
+                            <div id="appointmentStatus" class="mb-3">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span id="appointmentCount" class="badge bg-info">Loading...</span>
+                                    <small id="lastRefresh" class="text-muted">Last updated: Never</small>
+                                </div>
+                            </div>
+
+                            <div id="appointmentLoading" class="text-center py-3" style="display: none;">
+                                <div class="spinner-border spinner-border-sm" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                <span class="ms-2">Loading appointments...</span>
+                            </div>
+
+                            <div id="appointmentError" class="alert alert-warning" style="display: none;">
+                                <div id="appointmentErrorMessage"></div>
+                            </div>
+
+                            <div id="appointmentList" class="row">
+                                <!-- Appointment cards will be populated here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- OAuth Configuration Section -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">OAuth 2.0 Configuration</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <form id="oauthConfigForm">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="clientId" class="form-label">Client ID</label>
+                                                <input type="text" class="form-control" id="clientId" name="client_id" required>
+                                                <div class="form-text">OAuth 2.0 client identifier from OpenEMR</div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="clientSecret" class="form-label">Client Secret</label>
+                                                <input type="password" class="form-control" id="clientSecret" name="client_secret" required>
+                                                <div class="form-text">OAuth 2.0 client secret (stored encrypted)</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="authEndpoint" class="form-label">Authorization Endpoint</label>
+                                                <input type="url" class="form-control" id="authEndpoint" name="authorization_endpoint" required>
+                                                <div class="form-text">OpenEMR OAuth authorization URL</div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="tokenEndpoint" class="form-label">Token Endpoint</label>
+                                                <input type="url" class="form-control" id="tokenEndpoint" name="token_endpoint" required>
+                                                <div class="form-text">OpenEMR OAuth token URL</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="fhirBaseUrl" class="form-label">FHIR Base URL</label>
+                                        <input type="url" class="form-control" id="fhirBaseUrl" name="fhir_base_url" required>
+                                        <div class="form-text">OpenEMR FHIR R4 API base URL</div>
+                                    </div>
+                                    <div class="d-flex gap-2">
+                                        <button type="submit" class="btn btn-primary">Save Configuration</button>
+                                        <button type="button" class="btn btn-outline-secondary" id="testConnectionBtn">Test Connection</button>
+                                        <button type="button" class="btn btn-success" id="startOAuthBtn">Start OAuth Flow</button>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6 class="mb-0">OAuth Status</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div id="oauthStatus">
+                                            <p class="text-muted">Loading status...</p>
+                                        </div>
+                                        <div id="connectionResult" class="mt-3" style="display: none;">
+                                            <div class="alert" role="alert">
+                                                <div id="connectionMessage"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="row">
@@ -63,5 +220,1078 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // Input Validation and Sanitization Utilities
+        class ValidationUtils {
+            static sanitizeInput(input) {
+                if (typeof input !== 'string') return input;
+                return input
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#x27;')
+                    .replace(/\//g, '&#x2F;');
+            }
+
+            static validateDate(dateString) {
+                if (!dateString) return { valid: false, error: 'Date is required' };
+
+                const date = new Date(dateString);
+                if (isNaN(date.getTime())) {
+                    return { valid: false, error: 'Invalid date format' };
+                }
+
+                // Check if date is in reasonable range (not too far in past or future)
+                const now = new Date();
+                const minDate = new Date(now.getFullYear() - 10, 0, 1);
+                const maxDate = new Date(now.getFullYear() + 2, 11, 31);
+
+                if (date < minDate || date > maxDate) {
+                    return { valid: false, error: 'Date must be within 10 years past to 2 years future' };
+                }
+
+                return { valid: true };
+            }
+
+            static validateProvider(providerId) {
+                if (!providerId) return { valid: true }; // Empty is allowed (means "All Providers")
+
+                // Basic sanitization for provider ID
+                const sanitized = this.sanitizeInput(providerId);
+                if (sanitized !== providerId) {
+                    return { valid: false, error: 'Invalid characters in provider ID' };
+                }
+
+                return { valid: true };
+            }
+
+            static showValidationError(elementId, message) {
+                const element = document.getElementById(elementId);
+                if (!element) return;
+
+                // Remove existing error styling
+                element.classList.remove('is-invalid');
+                const existingFeedback = element.parentNode.querySelector('.invalid-feedback');
+                if (existingFeedback) {
+                    existingFeedback.remove();
+                }
+
+                if (message) {
+                    // Add error styling and message
+                    element.classList.add('is-invalid');
+                    const feedback = document.createElement('div');
+                    feedback.className = 'invalid-feedback';
+                    feedback.textContent = message;
+                    element.parentNode.appendChild(feedback);
+                }
+            }
+
+            static clearValidationErrors() {
+                document.querySelectorAll('.is-invalid').forEach(element => {
+                    element.classList.remove('is-invalid');
+                });
+                document.querySelectorAll('.invalid-feedback').forEach(element => {
+                    element.remove();
+                });
+            }
+        }
+
+        // Error Boundary and Global Error Handler
+        class ErrorHandler {
+            static init() {
+                // Global error handler for unhandled promise rejections
+                window.addEventListener('unhandledrejection', (event) => {
+                    console.error('Unhandled promise rejection:', event.reason);
+                    this.showError('An unexpected error occurred. Please refresh the page if the problem persists.', 'error');
+                    event.preventDefault();
+                });
+
+                // Global error handler for JavaScript errors
+                window.addEventListener('error', (event) => {
+                    console.error('JavaScript error:', event.error);
+                    this.showError('A system error occurred. Please refresh the page if the problem persists.', 'error');
+                });
+
+                // Fetch error handler
+                this.setupFetchErrorHandler();
+            }
+
+            static setupFetchErrorHandler() {
+                const originalFetch = window.fetch;
+                window.fetch = async (...args) => {
+                    try {
+                        const response = await originalFetch(...args);
+
+                        // Check for common HTTP errors
+                        if (!response.ok) {
+                            if (response.status === 401) {
+                                this.showError('Session expired. Please refresh the page to log in again.', 'warning');
+                                if (window.sessionManager) {
+                                    window.sessionManager.handleSessionTimeout();
+                                }
+                            } else if (response.status === 403) {
+                                this.showError('Access denied. You do not have permission to perform this action.', 'warning');
+                            } else if (response.status === 429) {
+                                this.showError('Too many requests. Please wait a moment and try again.', 'warning');
+                            } else if (response.status >= 500) {
+                                this.showError('Server error. Please try again later.', 'error');
+                            }
+                        }
+
+                        return response;
+                    } catch (error) {
+                        console.error('Network error:', error);
+                        this.showError('Network error. Please check your connection and try again.', 'error');
+                        throw error;
+                    }
+                };
+            }
+
+            static showError(message, type = 'error') {
+                // Create error alert
+                const alertDiv = document.createElement('div');
+                const alertClass = type === 'error' ? 'alert-danger' :
+                                 type === 'warning' ? 'alert-warning' : 'alert-info';
+
+                alertDiv.className = `alert ${alertClass} alert-dismissible fade show position-fixed`;
+                alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; max-width: 400px;';
+
+                alertDiv.innerHTML = `
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    ${ValidationUtils.sanitizeInput(message)}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                `;
+
+                document.body.appendChild(alertDiv);
+
+                // Auto-remove after 8 seconds
+                setTimeout(() => {
+                    if (alertDiv.parentNode) {
+                        alertDiv.remove();
+                    }
+                }, 8000);
+            }
+
+            static wrapAsyncMethod(target, methodName) {
+                const originalMethod = target[methodName];
+                target[methodName] = async function(...args) {
+                    try {
+                        return await originalMethod.apply(this, args);
+                    } catch (error) {
+                        console.error(`Error in ${methodName}:`, error);
+                        ErrorHandler.showError(`Failed to ${methodName.replace(/([A-Z])/g, ' $1').toLowerCase()}. Please try again.`, 'error');
+                        throw error;
+                    }
+                };
+            }
+        }
+
+        // Session Management
+        class SessionManager {
+            constructor() {
+                this.sessionTimeoutMinutes = 30;
+                this.sessionStartTime = Date.now();
+                this.warningShown = false;
+                this.timeoutId = null;
+                this.intervalId = null;
+                this.init();
+            }
+
+            init() {
+                this.setupEventListeners();
+                this.startSessionTimer();
+                this.resetSessionOnActivity();
+            }
+
+            setupEventListeners() {
+                // Logout button
+                document.getElementById('logoutBtn').addEventListener('click', () => {
+                    this.logout();
+                });
+
+                // Activity detection for session renewal
+                ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'].forEach(event => {
+                    document.addEventListener(event, () => {
+                        this.renewSession();
+                    }, { passive: true });
+                });
+            }
+
+            startSessionTimer() {
+                // Update timer display every minute
+                this.intervalId = setInterval(() => {
+                    this.updateTimerDisplay();
+                }, 60000);
+
+                // Set timeout for session expiry
+                this.timeoutId = setTimeout(() => {
+                    this.handleSessionTimeout();
+                }, this.sessionTimeoutMinutes * 60 * 1000);
+
+                this.updateTimerDisplay();
+            }
+
+            updateTimerDisplay() {
+                const elapsed = Date.now() - this.sessionStartTime;
+                const remaining = Math.max(0, (this.sessionTimeoutMinutes * 60 * 1000) - elapsed);
+                const minutes = Math.floor(remaining / 60000);
+                const seconds = Math.floor((remaining % 60000) / 1000);
+
+                const timerElement = document.getElementById('sessionTimer');
+                if (timerElement) {
+                    timerElement.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+                }
+
+                const statusElement = document.getElementById('sessionStatus');
+                if (statusElement) {
+                    if (remaining < 5 * 60 * 1000) { // Less than 5 minutes
+                        statusElement.className = 'badge bg-warning';
+                        statusElement.textContent = 'Expiring';
+                        this.showSessionWarning();
+                    } else if (remaining < 1 * 60 * 1000) { // Less than 1 minute
+                        statusElement.className = 'badge bg-danger';
+                        statusElement.textContent = 'Critical';
+                    }
+                }
+            }
+
+            showSessionWarning() {
+                if (!this.warningShown) {
+                    this.warningShown = true;
+                    const warningModal = this.createWarningModal();
+                    document.body.appendChild(warningModal);
+                    const modal = new bootstrap.Modal(warningModal);
+                    modal.show();
+                }
+            }
+
+            createWarningModal() {
+                const modal = document.createElement('div');
+                modal.className = 'modal fade';
+                modal.innerHTML = `
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header bg-warning">
+                                <h5 class="modal-title">Session Warning</h5>
+                            </div>
+                            <div class="modal-body">
+                                <p>Your session will expire in less than 5 minutes due to inactivity.</p>
+                                <p>Click "Extend Session" to continue working, or "Logout" to end your session now.</p>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" onclick="sessionManager.logout()">Logout</button>
+                                <button type="button" class="btn btn-primary" data-bs-dismiss="modal" onclick="sessionManager.extendSession()">Extend Session</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                return modal;
+            }
+
+            renewSession() {
+                // Reset session timer on user activity
+                if (Date.now() - this.sessionStartTime > 60000) { // Only renew if more than 1 minute has passed
+                    this.sessionStartTime = Date.now();
+                    this.warningShown = false;
+
+                    // Clear existing timers
+                    if (this.timeoutId) clearTimeout(this.timeoutId);
+                    if (this.intervalId) clearInterval(this.intervalId);
+
+                    // Restart timers
+                    this.startSessionTimer();
+
+                    // Update status to active
+                    const statusElement = document.getElementById('sessionStatus');
+                    if (statusElement) {
+                        statusElement.className = 'badge bg-success';
+                        statusElement.textContent = 'Active';
+                    }
+                }
+            }
+
+            extendSession() {
+                this.renewSession();
+                this.warningShown = false;
+            }
+
+            handleSessionTimeout() {
+                const statusElement = document.getElementById('sessionStatus');
+                if (statusElement) {
+                    statusElement.className = 'badge bg-danger';
+                    statusElement.textContent = 'Expired';
+                }
+
+                // Show session expired modal
+                const expiredModal = this.createExpiredModal();
+                document.body.appendChild(expiredModal);
+                const modal = new bootstrap.Modal(expiredModal, {
+                    backdrop: 'static',
+                    keyboard: false
+                });
+                modal.show();
+            }
+
+            createExpiredModal() {
+                const modal = document.createElement('div');
+                modal.className = 'modal fade';
+                modal.innerHTML = `
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header bg-danger text-white">
+                                <h5 class="modal-title">Session Expired</h5>
+                            </div>
+                            <div class="modal-body">
+                                <p>Your session has expired due to inactivity.</p>
+                                <p>For security reasons, you have been automatically logged out.</p>
+                                <p>Please refresh the page to start a new session.</p>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-primary" onclick="location.reload()">Refresh Page</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                return modal;
+            }
+
+            logout() {
+                // Clear session timers
+                if (this.timeoutId) clearTimeout(this.timeoutId);
+                if (this.intervalId) clearInterval(this.intervalId);
+
+                // Update status
+                const statusElement = document.getElementById('sessionStatus');
+                if (statusElement) {
+                    statusElement.className = 'badge bg-secondary';
+                    statusElement.textContent = 'Logged Out';
+                }
+
+                // Clear timer display
+                const timerElement = document.getElementById('sessionTimer');
+                if (timerElement) {
+                    timerElement.textContent = '--:--';
+                }
+
+                // Show logout confirmation
+                const logoutModal = this.createLogoutModal();
+                document.body.appendChild(logoutModal);
+                const modal = new bootstrap.Modal(logoutModal, {
+                    backdrop: 'static',
+                    keyboard: false
+                });
+                modal.show();
+
+                // Clear any sensitive data from memory
+                if (window.appointmentManager) {
+                    window.appointmentManager.clearData();
+                }
+            }
+
+            createLogoutModal() {
+                const modal = document.createElement('div');
+                modal.className = 'modal fade';
+                modal.innerHTML = `
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header bg-info">
+                                <h5 class="modal-title">Logged Out</h5>
+                            </div>
+                            <div class="modal-body">
+                                <p>You have been successfully logged out.</p>
+                                <p>Thank you for using the Voice AI Platform.</p>
+                                <p>Refresh the page to start a new session.</p>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-primary" onclick="location.reload()">Start New Session</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                return modal;
+            }
+
+            resetSessionOnActivity() {
+                // This method can be called externally to reset session timer
+                this.renewSession();
+            }
+        }
+
+        // Appointment Management
+        class AppointmentManager {
+            constructor() {
+                this.appointments = [];
+                this.providers = [];
+                this.refreshInterval = null;
+                this.init();
+            }
+
+            init() {
+                this.setupEventListeners();
+                this.loadProviders();
+                this.loadTodaysAppointments();
+                this.setDefaultDates();
+                this.startAutoRefresh();
+            }
+
+            setupEventListeners() {
+                // Filter controls
+                document.getElementById('providerFilter').addEventListener('change', () => {
+                    this.loadAppointments();
+                });
+
+                document.getElementById('startDate').addEventListener('change', () => {
+                    this.loadAppointments();
+                });
+
+                document.getElementById('endDate').addEventListener('change', () => {
+                    this.loadAppointments();
+                });
+
+                document.getElementById('statusFilter').addEventListener('change', () => {
+                    this.loadAppointments();
+                });
+
+                // Quick date buttons
+                document.getElementById('todayBtn').addEventListener('click', () => {
+                    this.setToday();
+                });
+
+                document.getElementById('tomorrowBtn').addEventListener('click', () => {
+                    this.setTomorrow();
+                });
+
+                document.getElementById('thisWeekBtn').addEventListener('click', () => {
+                    this.setThisWeek();
+                });
+
+                // Refresh button
+                document.getElementById('refreshAppointmentsBtn').addEventListener('click', () => {
+                    this.loadAppointments();
+                });
+            }
+
+            setDefaultDates() {
+                const today = new Date();
+                const todayStr = today.toISOString().split('T')[0];
+                document.getElementById('startDate').value = todayStr;
+                document.getElementById('endDate').value = todayStr;
+            }
+
+            setToday() {
+                const today = new Date();
+                const todayStr = today.toISOString().split('T')[0];
+                document.getElementById('startDate').value = todayStr;
+                document.getElementById('endDate').value = todayStr;
+                this.loadAppointments();
+            }
+
+            setTomorrow() {
+                const tomorrow = new Date();
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                const tomorrowStr = tomorrow.toISOString().split('T')[0];
+                document.getElementById('startDate').value = tomorrowStr;
+                document.getElementById('endDate').value = tomorrowStr;
+                this.loadAppointments();
+            }
+
+            setThisWeek() {
+                const today = new Date();
+                const startOfWeek = new Date(today);
+                const endOfWeek = new Date(today);
+
+                // Set to Monday
+                const dayOfWeek = today.getDay();
+                const diff = today.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
+                startOfWeek.setDate(diff);
+
+                // Set to Friday
+                endOfWeek.setDate(diff + 4);
+
+                document.getElementById('startDate').value = startOfWeek.toISOString().split('T')[0];
+                document.getElementById('endDate').value = endOfWeek.toISOString().split('T')[0];
+                this.loadAppointments();
+            }
+
+            async loadProviders() {
+                try {
+                    const response = await fetch('/api/v1/providers');
+                    const data = await response.json();
+
+                    if (data.status === 'success') {
+                        this.providers = data.providers;
+                        this.updateProviderFilter();
+                    } else {
+                        console.error('Failed to load providers:', data.error);
+                    }
+                } catch (error) {
+                    console.error('Error loading providers:', error);
+                }
+            }
+
+            updateProviderFilter() {
+                const select = document.getElementById('providerFilter');
+                // Clear existing options except "All Providers"
+                select.innerHTML = '<option value="">All Providers</option>';
+
+                this.providers.forEach(provider => {
+                    const option = document.createElement('option');
+                    option.value = provider.reference;
+                    option.textContent = provider.name;
+                    select.appendChild(option);
+                });
+            }
+
+            async loadTodaysAppointments() {
+                this.showLoading();
+                try {
+                    const response = await fetch('/api/v1/appointments/today');
+                    const data = await response.json();
+
+                    if (data.status === 'success') {
+                        this.appointments = data.appointments;
+                        this.updateAppointmentDisplay();
+                        this.updateLastRefresh();
+                    } else {
+                        this.showError(data.message || 'Failed to load appointments');
+                    }
+                } catch (error) {
+                    console.error('Error loading today\'s appointments:', error);
+                    this.showError('Network error loading appointments');
+                } finally {
+                    this.hideLoading();
+                }
+            }
+
+            async loadAppointments() {
+                const startDate = document.getElementById('startDate').value;
+                const endDate = document.getElementById('endDate').value;
+                const provider = document.getElementById('providerFilter').value;
+                const status = document.getElementById('statusFilter').value;
+
+                // Clear previous validation errors
+                ValidationUtils.clearValidationErrors();
+
+                // Validate inputs
+                let hasValidationErrors = false;
+
+                if (startDate) {
+                    const startValidation = ValidationUtils.validateDate(startDate);
+                    if (!startValidation.valid) {
+                        ValidationUtils.showValidationError('startDate', startValidation.error);
+                        hasValidationErrors = true;
+                    }
+                }
+
+                if (endDate) {
+                    const endValidation = ValidationUtils.validateDate(endDate);
+                    if (!endValidation.valid) {
+                        ValidationUtils.showValidationError('endDate', endValidation.error);
+                        hasValidationErrors = true;
+                    }
+                }
+
+                // Check date range logic
+                if (startDate && endDate && !hasValidationErrors) {
+                    const start = new Date(startDate);
+                    const end = new Date(endDate);
+                    if (start > end) {
+                        ValidationUtils.showValidationError('endDate', 'End date must be after start date');
+                        hasValidationErrors = true;
+                    }
+                }
+
+                if (provider) {
+                    const providerValidation = ValidationUtils.validateProvider(provider);
+                    if (!providerValidation.valid) {
+                        ValidationUtils.showValidationError('providerFilter', providerValidation.error);
+                        hasValidationErrors = true;
+                    }
+                }
+
+                // Stop if validation failed
+                if (hasValidationErrors) {
+                    return;
+                }
+
+                this.showLoading();
+
+                try {
+                    const params = new URLSearchParams();
+                    if (startDate) params.append('start_date', startDate);
+                    if (endDate) params.append('end_date', endDate);
+                    if (provider) params.append('provider', provider);
+                    if (status) params.append('status', status);
+
+                    const response = await fetch(`/api/v1/appointments?${params}`);
+                    const data = await response.json();
+
+                    if (data.status === 'success') {
+                        this.appointments = data.appointments;
+                        this.updateAppointmentDisplay();
+                        this.updateLastRefresh();
+                    } else {
+                        this.showError(data.message || 'Failed to load appointments');
+                    }
+                } catch (error) {
+                    console.error('Error loading appointments:', error);
+                    this.showError('Network error loading appointments');
+                } finally {
+                    this.hideLoading();
+                }
+            }
+
+            updateAppointmentDisplay() {
+                const appointmentList = document.getElementById('appointmentList');
+                const appointmentCount = document.getElementById('appointmentCount');
+
+                // Update count
+                appointmentCount.textContent = `${this.appointments.length} appointments`;
+                appointmentCount.className = this.appointments.length > 0 ? 'badge bg-success' : 'badge bg-secondary';
+
+                // Clear existing appointments
+                appointmentList.innerHTML = '';
+
+                if (this.appointments.length === 0) {
+                    appointmentList.innerHTML = `
+                        <div class="col-12">
+                            <div class="text-center py-4 text-muted">
+                                <i class="fas fa-calendar-times fa-3x mb-3"></i>
+                                <p>No appointments found for the selected criteria.</p>
+                            </div>
+                        </div>
+                    `;
+                    return;
+                }
+
+                // Group appointments by date
+                const appointmentsByDate = this.groupAppointmentsByDate();
+
+                Object.keys(appointmentsByDate).sort().forEach(date => {
+                    const dateHeader = document.createElement('div');
+                    dateHeader.className = 'col-12 mt-3 mb-2';
+                    dateHeader.innerHTML = `<h6 class="text-primary border-bottom pb-1">${this.formatDateHeader(date)}</h6>`;
+                    appointmentList.appendChild(dateHeader);
+
+                    appointmentsByDate[date].forEach(appointment => {
+                        const appointmentCard = this.createAppointmentCard(appointment);
+                        appointmentList.appendChild(appointmentCard);
+                    });
+                });
+            }
+
+            groupAppointmentsByDate() {
+                const grouped = {};
+                this.appointments.forEach(appointment => {
+                    const date = appointment.start ? appointment.start.split('T')[0] : 'unknown';
+                    if (!grouped[date]) grouped[date] = [];
+                    grouped[date].push(appointment);
+                });
+
+                // Sort appointments within each date by start time
+                Object.keys(grouped).forEach(date => {
+                    grouped[date].sort((a, b) => (a.start || '').localeCompare(b.start || ''));
+                });
+
+                return grouped;
+            }
+
+            formatDateHeader(dateStr) {
+                if (dateStr === 'unknown') return 'Unknown Date';
+
+                try {
+                    const date = new Date(dateStr);
+                    const today = new Date().toISOString().split('T')[0];
+                    const tomorrow = new Date();
+                    tomorrow.setDate(tomorrow.getDate() + 1);
+                    const tomorrowStr = tomorrow.toISOString().split('T')[0];
+
+                    if (dateStr === today) {
+                        return 'Today, ' + date.toLocaleDateString('en-US', {
+                            weekday: 'long',
+                            month: 'long',
+                            day: 'numeric'
+                        });
+                    } else if (dateStr === tomorrowStr) {
+                        return 'Tomorrow, ' + date.toLocaleDateString('en-US', {
+                            weekday: 'long',
+                            month: 'long',
+                            day: 'numeric'
+                        });
+                    } else {
+                        return date.toLocaleDateString('en-US', {
+                            weekday: 'long',
+                            month: 'long',
+                            day: 'numeric',
+                            year: 'numeric'
+                        });
+                    }
+                } catch (error) {
+                    return dateStr;
+                }
+            }
+
+            createAppointmentCard(appointment) {
+                const col = document.createElement('div');
+                col.className = 'col-md-6 col-lg-4 mb-3';
+
+                const statusClass = this.getStatusClass(appointment.status);
+                const statusIcon = this.getStatusIcon(appointment.status);
+
+                col.innerHTML = `
+                    <div class="card h-100 border-start border-3 ${statusClass}">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h6 class="card-title mb-0">${this.escapeHtml(appointment.patient_name)}</h6>
+                                <span class="badge ${statusClass} bg-opacity-10 text-${statusClass.replace('border-', '')}">
+                                    <i class="${statusIcon}"></i> ${appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)}
+                                </span>
+                            </div>
+                            <div class="text-muted small mb-2">
+                                <i class="fas fa-clock"></i> ${appointment.time_display || 'Time TBD'}
+                            </div>
+                            <div class="text-muted small mb-2">
+                                <i class="fas fa-user-md"></i> ${this.escapeHtml(appointment.provider_name)}
+                            </div>
+                            ${appointment.appointment_type ? `
+                                <div class="text-muted small mb-2">
+                                    <i class="fas fa-tag"></i> ${this.escapeHtml(appointment.appointment_type)}
+                                </div>
+                            ` : ''}
+                            ${appointment.description ? `
+                                <div class="text-muted small">
+                                    <i class="fas fa-info-circle"></i> ${this.escapeHtml(appointment.description)}
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+
+                return col;
+            }
+
+            getStatusClass(status) {
+                switch (status?.toLowerCase()) {
+                    case 'booked': return 'border-primary';
+                    case 'arrived': return 'border-info';
+                    case 'fulfilled': return 'border-success';
+                    case 'cancelled': return 'border-danger';
+                    case 'noshow': return 'border-warning';
+                    default: return 'border-secondary';
+                }
+            }
+
+            getStatusIcon(status) {
+                switch (status?.toLowerCase()) {
+                    case 'booked': return 'fas fa-calendar-check';
+                    case 'arrived': return 'fas fa-door-open';
+                    case 'fulfilled': return 'fas fa-check-circle';
+                    case 'cancelled': return 'fas fa-times-circle';
+                    case 'noshow': return 'fas fa-exclamation-triangle';
+                    default: return 'fas fa-calendar';
+                }
+            }
+
+            escapeHtml(text) {
+                if (!text) return '';
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+
+            showLoading() {
+                document.getElementById('appointmentLoading').style.display = 'block';
+                document.getElementById('appointmentError').style.display = 'none';
+            }
+
+            hideLoading() {
+                document.getElementById('appointmentLoading').style.display = 'none';
+            }
+
+            showError(message) {
+                document.getElementById('appointmentError').style.display = 'block';
+                document.getElementById('appointmentErrorMessage').textContent = message;
+            }
+
+            updateLastRefresh() {
+                const now = new Date();
+                document.getElementById('lastRefresh').textContent =
+                    `Last updated: ${now.toLocaleTimeString()}`;
+            }
+
+            startAutoRefresh() {
+                // Refresh appointments every 5 minutes
+                this.refreshInterval = setInterval(() => {
+                    this.loadAppointments();
+                }, 5 * 60 * 1000);
+            }
+
+            stopAutoRefresh() {
+                if (this.refreshInterval) {
+                    clearInterval(this.refreshInterval);
+                    this.refreshInterval = null;
+                }
+            }
+        }
+
+        // OAuth Configuration Management
+        class OAuthManager {
+            constructor() {
+                this.init();
+            }
+
+            init() {
+                this.loadOAuthStatus();
+                this.setupEventListeners();
+            }
+
+            setupEventListeners() {
+                // Form submission
+                document.getElementById('oauthConfigForm').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.saveConfiguration();
+                });
+
+                // Test connection button
+                document.getElementById('testConnectionBtn').addEventListener('click', () => {
+                    this.testConnection();
+                });
+
+                // Start OAuth flow button
+                document.getElementById('startOAuthBtn').addEventListener('click', () => {
+                    this.startOAuthFlow();
+                });
+
+                // Refresh status every 30 seconds
+                setInterval(() => {
+                    this.loadOAuthStatus();
+                }, 30000);
+            }
+
+            async loadOAuthStatus() {
+                try {
+                    const response = await fetch('/api/v1/oauth/status');
+                    const status = await response.json();
+                    this.updateStatusDisplay(status);
+                } catch (error) {
+                    console.error('Failed to load OAuth status:', error);
+                    this.updateStatusDisplay({
+                        authenticated: false,
+                        error: 'Failed to load status'
+                    });
+                }
+            }
+
+            updateStatusDisplay(status) {
+                const statusDiv = document.getElementById('oauthStatus');
+
+                if (status.authenticated) {
+                    statusDiv.innerHTML = `
+                        <div class="d-flex align-items-center">
+                            <span class="badge bg-success me-2">Authenticated</span>
+                        </div>
+                        <small class="text-muted">
+                            Expires: ${new Date(status.expires_at).toLocaleString()}
+                        </small>
+                    `;
+                } else {
+                    statusDiv.innerHTML = `
+                        <div class="d-flex align-items-center">
+                            <span class="badge bg-secondary me-2">Not Authenticated</span>
+                        </div>
+                        <small class="text-muted">
+                            ${status.error || 'No OAuth tokens found'}
+                        </small>
+                    `;
+                }
+            }
+
+            async saveConfiguration() {
+                const form = document.getElementById('oauthConfigForm');
+                const formData = new FormData(form);
+
+                const config = {
+                    client_id: formData.get('client_id'),
+                    client_secret: formData.get('client_secret'),
+                    authorization_endpoint: formData.get('authorization_endpoint'),
+                    token_endpoint: formData.get('token_endpoint'),
+                    fhir_base_url: formData.get('fhir_base_url')
+                };
+
+                try {
+                    // Show loading state
+                    const saveBtn = form.querySelector('button[type="submit"]');
+                    const originalText = saveBtn.textContent;
+                    saveBtn.textContent = 'Saving...';
+                    saveBtn.disabled = true;
+
+                    const response = await fetch('/api/v1/oauth/config', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(config)
+                    });
+
+                    if (response.ok) {
+                        this.showAlert('Configuration saved successfully!', 'success');
+                    } else {
+                        const error = await response.json();
+                        this.showAlert(`Failed to save configuration: ${error.detail}`, 'danger');
+                    }
+                } catch (error) {
+                    console.error('Configuration save error:', error);
+                    this.showAlert('Failed to save configuration: Network error', 'danger');
+                } finally {
+                    // Restore button state
+                    const saveBtn = form.querySelector('button[type="submit"]');
+                    saveBtn.textContent = originalText;
+                    saveBtn.disabled = false;
+                }
+            }
+
+            async testConnection() {
+                const testBtn = document.getElementById('testConnectionBtn');
+                const originalText = testBtn.textContent;
+
+                try {
+                    testBtn.textContent = 'Testing...';
+                    testBtn.disabled = true;
+
+                    const response = await fetch('/api/v1/oauth/test', {
+                        method: 'POST'
+                    });
+
+                    const result = await response.json();
+                    this.showConnectionResult(result);
+                } catch (error) {
+                    console.error('Connection test error:', error);
+                    this.showConnectionResult({
+                        status: 'error',
+                        error: 'network_error',
+                        message: 'Failed to test connection: Network error'
+                    });
+                } finally {
+                    testBtn.textContent = originalText;
+                    testBtn.disabled = false;
+                }
+            }
+
+            showConnectionResult(result) {
+                const resultDiv = document.getElementById('connectionResult');
+                const messageDiv = document.getElementById('connectionMessage');
+
+                let alertClass, message;
+
+                if (result.status === 'success') {
+                    alertClass = 'alert-success';
+                    message = `
+                        <strong>Connection Successful!</strong><br>
+                        FHIR Version: ${result.fhir_version}<br>
+                        Software: ${result.software}<br>
+                        ${result.message}
+                    `;
+                } else {
+                    alertClass = 'alert-danger';
+                    message = `
+                        <strong>Connection Failed</strong><br>
+                        Error: ${result.error}<br>
+                        ${result.message}
+                    `;
+                }
+
+                resultDiv.style.display = 'block';
+                resultDiv.querySelector('.alert').className = `alert ${alertClass}`;
+                messageDiv.innerHTML = message;
+
+                // Auto-hide after 10 seconds
+                setTimeout(() => {
+                    resultDiv.style.display = 'none';
+                }, 10000);
+            }
+
+            startOAuthFlow() {
+                // Open OAuth authorization in new window
+                const authWindow = window.open(
+                    '/oauth/authorize',
+                    'oauth_auth',
+                    'width=600,height=700,scrollbars=yes,resizable=yes'
+                );
+
+                // Monitor the popup for completion
+                const checkClosed = setInterval(() => {
+                    if (authWindow.closed) {
+                        clearInterval(checkClosed);
+                        // Refresh status after OAuth flow
+                        setTimeout(() => {
+                            this.loadOAuthStatus();
+                        }, 1000);
+                    }
+                }, 1000);
+            }
+
+            showAlert(message, type) {
+                // Create and show Bootstrap alert
+                const alertDiv = document.createElement('div');
+                alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+                alertDiv.innerHTML = `
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                `;
+
+                // Insert at top of OAuth card body
+                const cardBody = document.querySelector('.card-body');
+                cardBody.insertBefore(alertDiv, cardBody.firstChild);
+
+                // Auto-remove after 5 seconds
+                setTimeout(() => {
+                    if (alertDiv.parentNode) {
+                        alertDiv.remove();
+                    }
+                }, 5000);
+            }
+
+            clearData() {
+                // Clear sensitive appointment data from memory
+                this.appointments = [];
+                this.providers = [];
+
+                // Clear display
+                const appointmentList = document.getElementById('appointmentList');
+                if (appointmentList) {
+                    appointmentList.innerHTML = '<div class="text-center py-4"><i class="fas fa-sign-out-alt fa-2x text-muted mb-2"></i><br>Session ended</div>';
+                }
+
+                // Clear provider filter
+                const providerFilter = document.getElementById('providerFilter');
+                if (providerFilter) {
+                    providerFilter.innerHTML = '<option value="">All Providers</option>';
+                }
+
+                // Stop auto-refresh
+                if (this.refreshInterval) {
+                    clearInterval(this.refreshInterval);
+                    this.refreshInterval = null;
+                }
+            }
+        }
+
+        // Initialize managers when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialize error handling first
+            ErrorHandler.init();
+
+            // Initialize managers
+            window.sessionManager = new SessionManager();
+            window.appointmentManager = new AppointmentManager();
+            const oauthManager = new OAuthManager();
+
+            // Wrap critical async methods with error boundaries
+            ErrorHandler.wrapAsyncMethod(window.appointmentManager, 'loadAppointments');
+            ErrorHandler.wrapAsyncMethod(window.appointmentManager, 'loadTodaysAppointments');
+            ErrorHandler.wrapAsyncMethod(window.appointmentManager, 'loadProviders');
+        });
+    </script>
 </body>
 </html>

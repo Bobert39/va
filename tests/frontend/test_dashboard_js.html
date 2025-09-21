@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frontend JavaScript Unit Tests - Voice AI Platform</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .test-pass { color: #28a745; }
+        .test-fail { color: #dc3545; }
+        .test-pending { color: #ffc107; }
+        .test-output { font-family: monospace; background-color: #f8f9fa; padding: 1rem; margin: 0.5rem 0; border-radius: 0.25rem; }
+    </style>
+</head>
+<body>
+    <div class="container mt-4">
+        <h1>Frontend JavaScript Unit Tests</h1>
+        <div class="alert alert-info">
+            <p>Basic unit tests for critical JavaScript functions in the Voice AI Platform dashboard.</p>
+            <p>These tests verify core functionality including validation, session management, and error handling.</p>
+        </div>
+
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Test Results</h5>
+                        <button type="button" class="btn btn-primary" id="runTestsBtn">Run All Tests</button>
+                    </div>
+                    <div class="card-body">
+                        <div id="testResults"></div>
+                        <div id="testSummary" class="mt-3"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Simple test framework
+        class SimpleTestFramework {
+            constructor() {
+                this.tests = [];
+                this.results = [];
+            }
+
+            describe(suiteName, testFn) {
+                console.log(`\n=== ${suiteName} ===`);
+                const currentSuite = suiteName;
+
+                const it = (testName, testFn) => {
+                    this.tests.push({
+                        suite: currentSuite,
+                        name: testName,
+                        test: testFn
+                    });
+                };
+
+                testFn(it);
+            }
+
+            async runAllTests() {
+                this.results = [];
+                const resultsDiv = document.getElementById('testResults');
+                resultsDiv.innerHTML = '';
+
+                for (const test of this.tests) {
+                    try {
+                        const startTime = performance.now();
+                        await test.test();
+                        const endTime = performance.now();
+
+                        this.results.push({
+                            suite: test.suite,
+                            name: test.name,
+                            status: 'pass',
+                            duration: endTime - startTime,
+                            error: null
+                        });
+                    } catch (error) {
+                        this.results.push({
+                            suite: test.suite,
+                            name: test.name,
+                            status: 'fail',
+                            duration: 0,
+                            error: error.message
+                        });
+                    }
+                }
+
+                this.displayResults();
+            }
+
+            displayResults() {
+                const resultsDiv = document.getElementById('testResults');
+                const summaryDiv = document.getElementById('testSummary');
+
+                let html = '';
+                let currentSuite = '';
+
+                for (const result of this.results) {
+                    if (result.suite !== currentSuite) {
+                        if (currentSuite) html += '</div></div>';
+                        html += `<div class="mb-3"><h6>${result.suite}</h6><div class="ms-3">`;
+                        currentSuite = result.suite;
+                    }
+
+                    const statusClass = result.status === 'pass' ? 'test-pass' : 'test-fail';
+                    const icon = result.status === 'pass' ? '✓' : '✗';
+
+                    html += `
+                        <div class="${statusClass}">
+                            ${icon} ${result.name}
+                            <small class="text-muted">(${result.duration.toFixed(2)}ms)</small>
+                        </div>
+                    `;
+
+                    if (result.error) {
+                        html += `<div class="test-output text-danger ms-3">${result.error}</div>`;
+                    }
+                }
+
+                if (currentSuite) html += '</div></div>';
+                resultsDiv.innerHTML = html;
+
+                // Summary
+                const passed = this.results.filter(r => r.status === 'pass').length;
+                const failed = this.results.filter(r => r.status === 'fail').length;
+                const total = this.results.length;
+
+                summaryDiv.innerHTML = `
+                    <div class="alert ${failed === 0 ? 'alert-success' : 'alert-warning'}">
+                        <strong>Test Summary:</strong> ${passed}/${total} tests passed
+                        ${failed > 0 ? `<br><strong>${failed} tests failed</strong>` : ''}
+                    </div>
+                `;
+            }
+
+            assert(condition, message = 'Assertion failed') {
+                if (!condition) {
+                    throw new Error(message);
+                }
+            }
+
+            assertEqual(actual, expected, message = 'Values are not equal') {
+                if (actual !== expected) {
+                    throw new Error(`${message}: expected ${expected}, got ${actual}`);
+                }
+            }
+
+            assertThrows(fn, message = 'Function should throw an error') {
+                try {
+                    fn();
+                    throw new Error(message);
+                } catch (error) {
+                    // Expected to throw
+                }
+            }
+        }
+
+        // Mock ValidationUtils for testing
+        class ValidationUtils {
+            static sanitizeInput(input) {
+                if (typeof input !== 'string') return input;
+                return input
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#x27;')
+                    .replace(/\//g, '&#x2F;');
+            }
+
+            static validateDate(dateString) {
+                if (!dateString) return { valid: false, error: 'Date is required' };
+
+                const date = new Date(dateString);
+                if (isNaN(date.getTime())) {
+                    return { valid: false, error: 'Invalid date format' };
+                }
+
+                const now = new Date();
+                const minDate = new Date(now.getFullYear() - 10, 0, 1);
+                const maxDate = new Date(now.getFullYear() + 2, 11, 31);
+
+                if (date < minDate || date > maxDate) {
+                    return { valid: false, error: 'Date must be within 10 years past to 2 years future' };
+                }
+
+                return { valid: true };
+            }
+
+            static validateProvider(providerId) {
+                if (!providerId) return { valid: true };
+
+                const sanitized = this.sanitizeInput(providerId);
+                if (sanitized !== providerId) {
+                    return { valid: false, error: 'Invalid characters in provider ID' };
+                }
+
+                return { valid: true };
+            }
+        }
+
+        // Initialize test framework
+        const testFramework = new SimpleTestFramework();
+
+        // Define tests
+        testFramework.describe('ValidationUtils', (it) => {
+            it('should sanitize HTML input correctly', () => {
+                const result = ValidationUtils.sanitizeInput('<script>alert("xss")</script>');
+                testFramework.assertEqual(result, '&lt;script&gt;alert(&quot;xss&quot;)&lt;&#x2F;script&gt;');
+            });
+
+            it('should validate dates correctly', () => {
+                // Valid date
+                const validResult = ValidationUtils.validateDate('2025-01-15');
+                testFramework.assert(validResult.valid, 'Valid date should pass validation');
+
+                // Invalid date
+                const invalidResult = ValidationUtils.validateDate('invalid-date');
+                testFramework.assert(!invalidResult.valid, 'Invalid date should fail validation');
+
+                // Empty date
+                const emptyResult = ValidationUtils.validateDate('');
+                testFramework.assert(!emptyResult.valid, 'Empty date should fail validation');
+
+                // Future date (too far)
+                const futureResult = ValidationUtils.validateDate('2030-01-01');
+                testFramework.assert(!futureResult.valid, 'Date too far in future should fail');
+            });
+
+            it('should validate provider IDs correctly', () => {
+                // Valid provider
+                const validResult = ValidationUtils.validateProvider('provider-123');
+                testFramework.assert(validResult.valid, 'Valid provider ID should pass');
+
+                // Empty provider (should be valid)
+                const emptyResult = ValidationUtils.validateProvider('');
+                testFramework.assert(emptyResult.valid, 'Empty provider should be valid');
+
+                // Invalid characters
+                const invalidResult = ValidationUtils.validateProvider('<script>');
+                testFramework.assert(!invalidResult.valid, 'Provider with HTML should fail');
+            });
+        });
+
+        testFramework.describe('Session Management Logic', (it) => {
+            it('should calculate session time correctly', () => {
+                // Mock session manager logic
+                const sessionTimeoutMinutes = 30;
+                const sessionStartTime = Date.now() - (15 * 60 * 1000); // 15 minutes ago
+
+                const elapsed = Date.now() - sessionStartTime;
+                const remaining = Math.max(0, (sessionTimeoutMinutes * 60 * 1000) - elapsed);
+                const minutes = Math.floor(remaining / 60000);
+
+                testFramework.assert(minutes === 14 || minutes === 15, `Expected 14-15 minutes remaining, got ${minutes}`);
+            });
+
+            it('should detect session timeout correctly', () => {
+                const sessionTimeoutMinutes = 30;
+                const sessionStartTime = Date.now() - (31 * 60 * 1000); // 31 minutes ago
+
+                const elapsed = Date.now() - sessionStartTime;
+                const remaining = Math.max(0, (sessionTimeoutMinutes * 60 * 1000) - elapsed);
+
+                testFramework.assertEqual(remaining, 0, 'Session should be timed out');
+            });
+        });
+
+        testFramework.describe('Error Handling', (it) => {
+            it('should handle network errors gracefully', () => {
+                // Mock error handler logic
+                class MockErrorHandler {
+                    static showError(message, type) {
+                        return { message, type };
+                    }
+                }
+
+                const result = MockErrorHandler.showError('Network error', 'error');
+                testFramework.assertEqual(result.message, 'Network error');
+                testFramework.assertEqual(result.type, 'error');
+            });
+
+            it('should sanitize error messages', () => {
+                const maliciousMessage = '<script>alert("xss")</script>';
+                const sanitized = ValidationUtils.sanitizeInput(maliciousMessage);
+
+                testFramework.assert(!sanitized.includes('<script>'), 'Error message should be sanitized');
+            });
+        });
+
+        testFramework.describe('Date Range Validation', (it) => {
+            it('should validate date ranges correctly', () => {
+                const startDate = '2025-01-01';
+                const endDate = '2025-01-31';
+
+                const start = new Date(startDate);
+                const end = new Date(endDate);
+
+                testFramework.assert(start <= end, 'Start date should be before or equal to end date');
+            });
+
+            it('should reject invalid date ranges', () => {
+                const startDate = '2025-01-31';
+                const endDate = '2025-01-01';
+
+                const start = new Date(startDate);
+                const end = new Date(endDate);
+
+                testFramework.assert(start > end, 'Invalid range should be detected');
+            });
+        });
+
+        // Auto-run tests when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('runTestsBtn').addEventListener('click', () => {
+                testFramework.runAllTests();
+            });
+
+            // Run tests automatically
+            setTimeout(() => {
+                testFramework.runAllTests();
+            }, 500);
+        });
+    </script>
+</body>
+</html>

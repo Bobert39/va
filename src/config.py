@@ -6,15 +6,16 @@ and management for the Voice AI Platform. It provides secure storage
 for practice settings, credentials, and operational parameters.
 """
 
-import json
-import os
 import base64
+import json
+import logging
+import os
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
+
 from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -41,7 +42,9 @@ class ConfigurationManager:
             password: Password for encryption (uses env var if not provided)
         """
         self.config_path = Path(config_path)
-        self.password = password or os.getenv("CONFIG_PASSWORD", "default-dev-password")
+        self.password: str = (
+            password or os.getenv("CONFIG_PASSWORD") or "default-dev-password"
+        )
         self._config: Dict[str, Any] = {}
         self._encryption_key: Optional[bytes] = None
 
@@ -101,6 +104,33 @@ class ConfigurationManager:
                 "client_secret": "",
                 "redirect_uri": "http://localhost:8000/auth/callback",
             },
+            "oauth_config": {
+                "client_id": "",
+                "client_secret": "",
+                "redirect_uri": "http://localhost:8000/oauth/callback",
+                "authorization_endpoint": "",
+                "token_endpoint": "",
+                "fhir_base_url": "",
+                "scopes": [
+                    "openid",
+                    "fhirUser",
+                    "patient/*.read",
+                    "patient/*.write",
+                    "Patient.read",
+                    "Encounter.read",
+                    "DiagnosticReport.read",
+                    "Medication.read",
+                    "Appointment.read",
+                    "Appointment.write",
+                ],
+            },
+            "oauth_tokens": {
+                "access_token": "",
+                "refresh_token": "",
+                "token_type": "Bearer",
+                "expires_at": "",
+                "scope": "",
+            },
             "api_keys": {
                 "openai_api_key": "",
                 "twilio_account_sid": "",
@@ -141,6 +171,8 @@ class ConfigurationManager:
         required_sections = [
             "practice_name",
             "emr_credentials",
+            "oauth_config",
+            "oauth_tokens",
             "api_keys",
             "operational_hours",
             "system_settings",
@@ -155,6 +187,32 @@ class ConfigurationManager:
         for field in emr_required:
             if field not in config["emr_credentials"]:
                 raise ValueError(f"Missing EMR credential field: {field}")
+
+        # Validate OAuth configuration structure
+        oauth_config_required = [
+            "client_id",
+            "client_secret",
+            "redirect_uri",
+            "authorization_endpoint",
+            "token_endpoint",
+            "fhir_base_url",
+            "scopes",
+        ]
+        for field in oauth_config_required:
+            if field not in config["oauth_config"]:
+                raise ValueError(f"Missing OAuth config field: {field}")
+
+        # Validate OAuth tokens structure
+        oauth_tokens_required = [
+            "access_token",
+            "refresh_token",
+            "token_type",
+            "expires_at",
+            "scope",
+        ]
+        for field in oauth_tokens_required:
+            if field not in config["oauth_tokens"]:
+                raise ValueError(f"Missing OAuth tokens field: {field}")
 
         # Validate API keys structure
         api_keys_required = [
@@ -197,7 +255,7 @@ class ConfigurationManager:
                 base64.urlsafe_b64decode(file_content.encode())
                 # If successful, it's encrypted
                 config = self._decrypt_data(file_content)
-            except:
+            except Exception:
                 # If base64 decode fails, assume it's plain JSON
                 config = json.loads(file_content)
 
@@ -241,7 +299,8 @@ class ConfigurationManager:
         Get configuration value by key.
 
         Args:
-            key: Configuration key (supports dot notation, e.g., 'api_keys.openai_api_key')
+            key: Configuration key (supports dot notation,
+            e.g., 'api_keys.openai_api_key')
             default: Default value if key not found
 
         Returns:
@@ -292,7 +351,7 @@ class ConfigurationManager:
 config_manager = ConfigurationManager()
 
 
-def get_config(key: str = None, default: Any = None) -> Any:
+def get_config(key: Optional[str] = None, default: Any = None) -> Any:
     """
     Get configuration value or entire configuration.
 

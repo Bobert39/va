@@ -5,14 +5,13 @@ HIPAA-compliant audit logging system for the Voice AI Platform.
 Ensures secure logging with no PHI exposure and proper log rotation.
 """
 
+import hashlib
 import json
 import logging
 import logging.handlers
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Dict, Any, Optional
-import hashlib
-import os
+from typing import Any, Dict, Optional
 
 # Configure audit logger
 audit_logger = logging.getLogger("audit")
@@ -107,7 +106,7 @@ class AuditLogger:
         audit_logger.setLevel(logging.INFO)
         audit_logger.propagate = False
 
-    def _hash_sensitive_data(self, data: str) -> str:
+    def _hash_sensitive_data(self, data: Optional[str]) -> Optional[str]:
         """Hash sensitive data for audit logging."""
         if not data:
             return None
