@@ -658,6 +658,168 @@ class EMROAuthClient:
 
         return token_data["access_token"]
 
+    async def create_appointment(
+        self, appointment_data: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """
+        Create appointment in OpenEMR.
+
+        Args:
+            appointment_data: Appointment data in EMR format
+
+        Returns:
+            Created appointment details
+
+        Raises:
+            OAuthError: If authentication fails
+            httpx.RequestError: If network error occurs
+        """
+        try:
+            access_token = await self.ensure_valid_token()
+        except (OAuthError, TokenExpiredError) as e:
+            logger.error(f"Authentication failed for appointment creation: {e}")
+            raise
+
+        oauth_config = self._get_oauth_config()
+        base_url = oauth_config.get("base_url")
+
+        if not base_url:
+            raise ConfigurationError("EMR base URL not configured")
+
+        headers = {
+            "Authorization": f"Bearer {access_token}",
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+        }
+
+        appointment_endpoint = oauth_config.get(
+            "appointment_endpoint", "/apis/default/api/appointment"
+        )
+
+        try:
+            async with httpx.AsyncClient(timeout=self.timeout) as client:
+                response = await client.post(
+                    f"{base_url}{appointment_endpoint}",
+                    json=appointment_data,
+                    headers=headers,
+                )
+
+                if response.status_code == 201:
+                    created_appointment = response.json()
+                    logger.info(
+                        f"Successfully created appointment: {created_appointment.get('id')}"
+                    )
+                    return created_appointment
+                elif response.status_code == 401:
+                    raise OAuthError("unauthorized", "Authentication failed")
+                elif response.status_code == 400:
+                    error_detail = response.json() if response.content else {}
+                    raise OAuthError(
+                        "bad_request", f"Invalid appointment data: {error_detail}"
+                    )
+                else:
+                    raise OAuthError(
+                        "api_error",
+                        f"API request failed with status {response.status_code}: {response.text}",
+                    )
+
+        except httpx.RequestError as e:
+            logger.error(f"Network error creating appointment: {e}")
+            raise NetworkError(f"Failed to connect to EMR: {e}")
+
+    async def update_appointment(
+        self, appointment_id: str, update_data: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """
+        Update existing appointment in OpenEMR.
+
+        Args:
+            appointment_id: EMR appointment ID
+            update_data: Updated appointment data
+
+        Returns:
+            Updated appointment details
+
+        Raises:
+            OAuthError: If authentication fails
+            httpx.RequestError: If network error occurs
+        """
+        try:
+            access_token = await self.ensure_valid_token()
+        except (OAuthError, TokenExpiredError) as e:
+            logger.error(f"Authentication failed for appointment update: {e}")
+            raise
+
+        oauth_config = self._get_oauth_config()
+        base_url = oauth_config.get("base_url")
+
+        if not base_url:
+            raise ConfigurationError("EMR base URL not configured")
+
+        headers = {
+            "Authorization": f"Bearer {access_token}",
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+        }
+
+        appointment_endpoint = oauth_config.get(
+            "appointment_endpoint", "/apis/default/api/appointment"
+        )
+
+        try:
+            async with httpx.AsyncClient(timeout=self.timeout) as client:
+                response = await client.put(
+                    f"{base_url}{appointment_endpoint}/{appointment_id}",
+                    json=update_data,
+                    headers=headers,
+                )
+
+                if response.status_code == 200:
+                    updated_appointment = response.json()
+                    logger.info(f"Successfully updated appointment: {appointment_id}")
+                    return updated_appointment
+                elif response.status_code == 404:
+                    raise OAuthError(
+                        "not_found", f"Appointment {appointment_id} not found"
+                    )
+                elif response.status_code == 401:
+                    raise OAuthError("unauthorized", "Authentication failed")
+                else:
+                    raise OAuthError(
+                        "api_error",
+                        f"API request failed with status {response.status_code}: {response.text}",
+                    )
+
+        except httpx.RequestError as e:
+            logger.error(f"Network error updating appointment: {e}")
+            raise NetworkError(f"Failed to connect to EMR: {e}")
+
+    async def cancel_appointment(
+        self, appointment_id: str, cancellation_reason: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """
+        Cancel appointment in OpenEMR.
+
+        Args:
+            appointment_id: EMR appointment ID
+            cancellation_reason: Optional reason for cancellation
+
+        Returns:
+            Cancellation confirmation
+
+        Raises:
+            OAuthError: If authentication fails
+            httpx.RequestError: If network error occurs
+        """
+        update_data = {"pc_apptstatus": "cancelled"}
+
+        if cancellation_reason:
+            update_data["pc_hometext"] = cancellation_reason
+
+        result = await self.update_appointment(appointment_id, update_data)
+        logger.info(f"Successfully cancelled appointment: {appointment_id}")
+        return result
+
     async def test_connection(self) -> Dict[str, Any]:
         """
         Test OAuth connection to OpenEMR FHIR API.

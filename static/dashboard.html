@@ -6,6 +6,8 @@
     <title>Voice AI Platform - Dashboard</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="/static/configuration-wizard.css" rel="stylesheet">
+    <link href="/static/health-monitoring.css" rel="stylesheet">
 </head>
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
@@ -40,11 +42,160 @@
                     </ul>
                 </div>
 
+                <!-- AI Appointments Monitoring Section -->
+                <div class="card mb-4 border-primary">
+                    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="fas fa-robot"></i> AI-Scheduled Appointments
+                            <span id="realtimeIndicator" class="badge bg-success ms-2">
+                                <i class="fas fa-circle"></i> Real-time
+                            </span>
+                        </h5>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-sm btn-light" id="exportCsvBtn">
+                                <i class="fas fa-file-csv"></i> Export CSV
+                            </button>
+                            <button type="button" class="btn btn-sm btn-light" id="exportPdfBtn">
+                                <i class="fas fa-file-pdf"></i> Export PDF
+                            </button>
+                            <button type="button" class="btn btn-sm btn-light" id="refreshAiBtn">
+                                <i class="fas fa-sync-alt"></i> Refresh
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <!-- AI Appointment Statistics -->
+                        <div class="row mb-3" id="aiStatistics">
+                            <div class="col-md-3">
+                                <div class="card bg-light">
+                                    <div class="card-body text-center">
+                                        <h6 class="card-title">Total Bookings</h6>
+                                        <h3 id="totalBookings" class="text-primary">0</h3>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card bg-light">
+                                    <div class="card-body text-center">
+                                        <h6 class="card-title">Success Rate</h6>
+                                        <h3 id="successRate" class="text-success">0%</h3>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card bg-light">
+                                    <div class="card-body text-center">
+                                        <h6 class="card-title">Pending</h6>
+                                        <h3 id="pendingCount" class="text-warning">0</h3>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card bg-light">
+                                    <div class="card-body text-center">
+                                        <h6 class="card-title">Failed</h6>
+                                        <h3 id="failedCount" class="text-danger">0</h3>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- AI Filters Row -->
+                        <div class="row mb-3">
+                            <div class="col-md-3">
+                                <label for="aiProviderFilter" class="form-label">Provider</label>
+                                <select class="form-select" id="aiProviderFilter">
+                                    <option value="">All Providers</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label for="aiTypeFilter" class="form-label">Type</label>
+                                <select class="form-select" id="aiTypeFilter">
+                                    <option value="">All Types</option>
+                                    <option value="new_patient">New Patient</option>
+                                    <option value="follow_up">Follow Up</option>
+                                    <option value="consultation">Consultation</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label for="aiStatusFilter" class="form-label">Status</label>
+                                <select class="form-select" id="aiStatusFilter">
+                                    <option value="">All</option>
+                                    <option value="confirmed">Confirmed</option>
+                                    <option value="pending">Pending</option>
+                                    <option value="failed">Failed</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label for="aiDateFrom" class="form-label">From</label>
+                                <input type="date" class="form-control" id="aiDateFrom">
+                            </div>
+                            <div class="col-md-2">
+                                <label for="aiDateTo" class="form-label">To</label>
+                                <input type="date" class="form-control" id="aiDateTo">
+                            </div>
+                            <div class="col-md-1 d-flex align-items-end">
+                                <button type="button" class="btn btn-primary w-100" id="aiFilterBtn">
+                                    <i class="fas fa-filter"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- AI Appointments Table -->
+                        <div class="table-responsive">
+                            <table class="table table-hover" id="aiAppointmentsTable">
+                                <thead>
+                                    <tr>
+                                        <th>Status</th>
+                                        <th>Date/Time</th>
+                                        <th>Patient</th>
+                                        <th>Provider</th>
+                                        <th>Type</th>
+                                        <th>Source</th>
+                                        <th>Confidence</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="aiAppointmentsBody">
+                                    <tr>
+                                        <td colspan="8" class="text-center">
+                                            <div class="spinner-border spinner-border-sm" role="status">
+                                                <span class="visually-hidden">Loading...</span>
+                                            </div>
+                                            Loading AI appointments...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Real-time notification area -->
+                        <div id="realtimeNotifications" class="mt-3" style="display: none;">
+                            <div class="alert alert-info alert-dismissible fade show" role="alert">
+                                <i class="fas fa-bell"></i> <span id="notificationText"></span>
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Appointments Section -->
                 <div class="card mb-4">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <h5 class="mb-0">Appointment Management</h5>
                         <div class="d-flex gap-2">
+                            <!-- Bulk Operations Controls (Story 3.4) -->
+                            <div class="btn-group" role="group" id="bulkOperationsGroup" style="display: none;">
+                                <button type="button" class="btn btn-sm btn-outline-warning" id="bulkRescheduleBtn">
+                                    <i class="fas fa-calendar-alt"></i> Reschedule Selected
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-danger" id="bulkCancelBtn">
+                                    <i class="fas fa-times-circle"></i> Cancel Selected
+                                </button>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-success" id="createManualAppointmentBtn">
+                                <i class="fas fa-plus"></i> New Appointment
+                            </button>
                             <button type="button" class="btn btn-sm btn-outline-primary" id="refreshAppointmentsBtn">
                                 <i class="fas fa-sync-alt"></i> Refresh
                             </button>
@@ -107,6 +258,480 @@
 
                             <div id="appointmentList" class="row">
                                 <!-- Appointment cards will be populated here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Setup Wizard Section -->
+                <div class="card mb-4" id="setupWizardCard" style="display: none;">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-magic"></i> Practice Setup Wizard
+                            <button type="button" class="btn btn-sm btn-outline-light float-end" id="skipWizardBtn">
+                                Skip Wizard
+                            </button>
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- Progress Bar -->
+                        <div class="mb-4">
+                            <div class="progress" style="height: 8px;">
+                                <div class="progress-bar bg-primary" id="wizardProgress" role="progressbar" style="width: 25%"></div>
+                            </div>
+                            <div class="d-flex justify-content-between mt-2">
+                                <small class="text-muted">Step <span id="currentStep">1</span> of 4</small>
+                                <small class="text-muted"><span id="progressPercent">25</span>% Complete</small>
+                            </div>
+                        </div>
+
+                        <!-- Wizard Steps -->
+                        <div id="wizardSteps">
+                            <!-- Step 1: Practice Information -->
+                            <div class="wizard-step" id="step1" style="display: block;">
+                                <h6 class="mb-3">
+                                    <i class="fas fa-building text-primary"></i> Step 1: Practice Information
+                                </h6>
+                                <p class="text-muted mb-4">Let's start with basic information about your practice.</p>
+
+                                <form id="wizardStep1Form">
+                                    <div class="row">
+                                        <div class="col-md-8">
+                                            <div class="mb-3">
+                                                <label for="wizardPracticeName" class="form-label">Practice Name *</label>
+                                                <input type="text" class="form-control" id="wizardPracticeName" required>
+                                                <div class="form-text">This name will be used in phone greetings and confirmations</div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="mb-3">
+                                                <label for="wizardPracticePhone" class="form-label">Main Phone *</label>
+                                                <input type="tel" class="form-control" id="wizardPracticePhone" required>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-8">
+                                            <div class="mb-3">
+                                                <label for="wizardPracticeAddress" class="form-label">Address</label>
+                                                <input type="text" class="form-control" id="wizardPracticeAddress" placeholder="Street Address">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="mb-3">
+                                                <label for="wizardPracticeCity" class="form-label">City</label>
+                                                <input type="text" class="form-control" id="wizardPracticeCity">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+
+                            <!-- Step 2: First Provider -->
+                            <div class="wizard-step" id="step2" style="display: none;">
+                                <h6 class="mb-3">
+                                    <i class="fas fa-user-md text-primary"></i> Step 2: Add Your First Provider
+                                </h6>
+                                <p class="text-muted mb-4">Add the first healthcare provider who will use the voice AI system.</p>
+
+                                <form id="wizardStep2Form">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="wizardProviderName" class="form-label">Provider Name *</label>
+                                                <input type="text" class="form-control" id="wizardProviderName" required placeholder="Dr. Jane Smith">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="wizardProviderSpecialty" class="form-label">Specialty</label>
+                                                <input type="text" class="form-control" id="wizardProviderSpecialty" placeholder="Family Medicine">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="wizardProviderEmail" class="form-label">Email</label>
+                                                <input type="email" class="form-control" id="wizardProviderEmail">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="wizardProviderPhone" class="form-label">Direct Phone</label>
+                                                <input type="tel" class="form-control" id="wizardProviderPhone">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+
+                            <!-- Step 3: Business Hours -->
+                            <div class="wizard-step" id="step3" style="display: none;">
+                                <h6 class="mb-3">
+                                    <i class="fas fa-clock text-primary"></i> Step 3: Set Business Hours
+                                </h6>
+                                <p class="text-muted mb-4">When is your practice open for appointments?</p>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Choose a template to get started:</label>
+                                    <div class="btn-group w-100" role="group">
+                                        <input type="radio" class="btn-check" name="hoursTemplate" id="wizardStandard" value="standard" checked>
+                                        <label class="btn btn-outline-primary" for="wizardStandard">
+                                            <strong>Standard</strong><br>
+                                            <small>Mon-Fri 9AM-5PM</small>
+                                        </label>
+                                        <input type="radio" class="btn-check" name="hoursTemplate" id="wizardExtended" value="extended">
+                                        <label class="btn btn-outline-primary" for="wizardExtended">
+                                            <strong>Extended</strong><br>
+                                            <small>Mon-Fri 8AM-6PM</small>
+                                        </label>
+                                        <input type="radio" class="btn-check" name="hoursTemplate" id="wizardWeekend" value="weekend">
+                                        <label class="btn btn-outline-primary" for="wizardWeekend">
+                                            <strong>Include Weekends</strong><br>
+                                            <small>Mon-Fri 9AM-5PM, Sat 9AM-1PM</small>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div class="alert alert-info">
+                                    <i class="fas fa-info-circle"></i>
+                                    You can customize these hours later in the detailed configuration.
+                                </div>
+                            </div>
+
+                            <!-- Step 4: Appointment Types -->
+                            <div class="wizard-step" id="step4" style="display: none;">
+                                <h6 class="mb-3">
+                                    <i class="fas fa-calendar text-primary"></i> Step 4: Appointment Types
+                                </h6>
+                                <p class="text-muted mb-4">What types of appointments do you offer?</p>
+
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="card h-100">
+                                            <div class="card-body text-center">
+                                                <div class="form-check mb-3">
+                                                    <input class="form-check-input" type="checkbox" id="aptConsultation" checked>
+                                                    <label class="form-check-label fw-bold" for="aptConsultation">
+                                                        Consultation
+                                                    </label>
+                                                </div>
+                                                <p class="text-muted small">30 minutes<br>General consultation appointments</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="card h-100">
+                                            <div class="card-body text-center">
+                                                <div class="form-check mb-3">
+                                                    <input class="form-check-input" type="checkbox" id="aptFollowUp" checked>
+                                                    <label class="form-check-label fw-bold" for="aptFollowUp">
+                                                        Follow-up
+                                                    </label>
+                                                </div>
+                                                <p class="text-muted small">20 minutes<br>Follow-up appointments for existing patients</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="card h-100">
+                                            <div class="card-body text-center">
+                                                <div class="form-check mb-3">
+                                                    <input class="form-check-input" type="checkbox" id="aptNewPatient" checked>
+                                                    <label class="form-check-label fw-bold" for="aptNewPatient">
+                                                        New Patient
+                                                    </label>
+                                                </div>
+                                                <p class="text-muted small">45 minutes<br>Initial appointments for new patients</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="alert alert-success mt-3">
+                                    <i class="fas fa-check-circle"></i>
+                                    You can add more appointment types and customize durations later.
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Navigation Buttons -->
+                        <div class="d-flex justify-content-between mt-4">
+                            <button type="button" class="btn btn-outline-secondary" id="wizardPrevBtn" disabled>
+                                <i class="fas fa-arrow-left"></i> Previous
+                            </button>
+                            <button type="button" class="btn btn-primary" id="wizardNextBtn">
+                                Next <i class="fas fa-arrow-right"></i>
+                            </button>
+                            <button type="button" class="btn btn-success" id="wizardFinishBtn" style="display: none;">
+                                <i class="fas fa-check"></i> Complete Setup
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Practice Configuration Section -->
+                <div class="card mb-4" id="configurationCard">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-cog"></i> Practice Configuration
+                            <button type="button" class="btn btn-sm btn-outline-primary float-end" id="showWizardBtn">
+                                <i class="fas fa-magic"></i> Setup Wizard
+                            </button>
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <ul class="nav nav-tabs" id="configTabs" role="tablist">
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link active" id="providers-tab" data-bs-toggle="tab" data-bs-target="#providers" type="button" role="tab">
+                                            <i class="fas fa-user-md"></i> Providers
+                                        </button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link" id="hours-tab" data-bs-toggle="tab" data-bs-target="#hours" type="button" role="tab">
+                                            <i class="fas fa-clock"></i> Hours
+                                        </button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link" id="appointments-tab" data-bs-toggle="tab" data-bs-target="#appointments" type="button" role="tab">
+                                            <i class="fas fa-calendar"></i> Appointment Types
+                                        </button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link" id="practice-tab" data-bs-toggle="tab" data-bs-target="#practice" type="button" role="tab">
+                                            <i class="fas fa-building"></i> Practice Info
+                                        </button>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="tab-content" id="configTabContent">
+                            <!-- Providers Tab -->
+                            <div class="tab-pane fade show active" id="providers" role="tabpanel">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h6 class="mb-0">Provider Management</h6>
+                                    <button type="button" class="btn btn-primary btn-sm" id="addProviderBtn">
+                                        <i class="fas fa-plus"></i> Add Provider
+                                    </button>
+                                </div>
+
+                                <div id="providersList">
+                                    <!-- Provider cards will be populated here -->
+                                </div>
+                            </div>
+
+                            <!-- Business Hours Tab -->
+                            <div class="tab-pane fade" id="hours" role="tabpanel">
+                                <h6 class="mb-3">Business Hours Configuration</h6>
+                                <form id="businessHoursForm">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <!-- Monday -->
+                                            <div class="mb-3">
+                                                <label class="form-label">Monday</label>
+                                                <div class="row">
+                                                    <div class="col">
+                                                        <input type="time" class="form-control" name="monday_start" value="09:00">
+                                                    </div>
+                                                    <div class="col">
+                                                        <input type="time" class="form-control" name="monday_end" value="17:00">
+                                                    </div>
+                                                    <div class="col-auto">
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="checkbox" name="monday_closed">
+                                                            <label class="form-check-label">Closed</label>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <!-- Tuesday -->
+                                            <div class="mb-3">
+                                                <label class="form-label">Tuesday</label>
+                                                <div class="row">
+                                                    <div class="col">
+                                                        <input type="time" class="form-control" name="tuesday_start" value="09:00">
+                                                    </div>
+                                                    <div class="col">
+                                                        <input type="time" class="form-control" name="tuesday_end" value="17:00">
+                                                    </div>
+                                                    <div class="col-auto">
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="checkbox" name="tuesday_closed">
+                                                            <label class="form-check-label">Closed</label>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <!-- Wednesday -->
+                                            <div class="mb-3">
+                                                <label class="form-label">Wednesday</label>
+                                                <div class="row">
+                                                    <div class="col">
+                                                        <input type="time" class="form-control" name="wednesday_start" value="09:00">
+                                                    </div>
+                                                    <div class="col">
+                                                        <input type="time" class="form-control" name="wednesday_end" value="17:00">
+                                                    </div>
+                                                    <div class="col-auto">
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="checkbox" name="wednesday_closed">
+                                                            <label class="form-check-label">Closed</label>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <!-- Thursday -->
+                                            <div class="mb-3">
+                                                <label class="form-label">Thursday</label>
+                                                <div class="row">
+                                                    <div class="col">
+                                                        <input type="time" class="form-control" name="thursday_start" value="09:00">
+                                                    </div>
+                                                    <div class="col">
+                                                        <input type="time" class="form-control" name="thursday_end" value="17:00">
+                                                    </div>
+                                                    <div class="col-auto">
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="checkbox" name="thursday_closed">
+                                                            <label class="form-check-label">Closed</label>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <!-- Friday -->
+                                            <div class="mb-3">
+                                                <label class="form-label">Friday</label>
+                                                <div class="row">
+                                                    <div class="col">
+                                                        <input type="time" class="form-control" name="friday_start" value="09:00">
+                                                    </div>
+                                                    <div class="col">
+                                                        <input type="time" class="form-control" name="friday_end" value="17:00">
+                                                    </div>
+                                                    <div class="col-auto">
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="checkbox" name="friday_closed">
+                                                            <label class="form-check-label">Closed</label>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <!-- Saturday -->
+                                            <div class="mb-3">
+                                                <label class="form-label">Saturday</label>
+                                                <div class="row">
+                                                    <div class="col">
+                                                        <input type="time" class="form-control" name="saturday_start" value="09:00">
+                                                    </div>
+                                                    <div class="col">
+                                                        <input type="time" class="form-control" name="saturday_end" value="13:00">
+                                                    </div>
+                                                    <div class="col-auto">
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="checkbox" name="saturday_closed">
+                                                            <label class="form-check-label">Closed</label>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <!-- Sunday -->
+                                            <div class="mb-3">
+                                                <label class="form-label">Sunday</label>
+                                                <div class="row">
+                                                    <div class="col">
+                                                        <input type="time" class="form-control" name="sunday_start" value="09:00" disabled>
+                                                    </div>
+                                                    <div class="col">
+                                                        <input type="time" class="form-control" name="sunday_end" value="17:00" disabled>
+                                                    </div>
+                                                    <div class="col-auto">
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="checkbox" name="sunday_closed" checked>
+                                                            <label class="form-check-label">Closed</label>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row mb-3">
+                                        <div class="col-12">
+                                            <div class="card bg-light">
+                                                <div class="card-body">
+                                                    <h6 class="card-title">Quick Templates</h6>
+                                                    <div class="btn-group btn-group-sm" role="group">
+                                                        <button type="button" class="btn btn-outline-secondary" onclick="configManager.applyHoursTemplate('standard')">
+                                                            Standard (9AM-5PM)
+                                                        </button>
+                                                        <button type="button" class="btn btn-outline-secondary" onclick="configManager.applyHoursTemplate('extended')">
+                                                            Extended (8AM-6PM)
+                                                        </button>
+                                                        <button type="button" class="btn btn-outline-secondary" onclick="configManager.applyHoursTemplate('weekend')">
+                                                            Include Weekends
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary">Save Business Hours</button>
+                                </form>
+                            </div>
+
+                            <!-- Appointment Types Tab -->
+                            <div class="tab-pane fade" id="appointments" role="tabpanel">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h6 class="mb-0">Appointment Types</h6>
+                                    <button type="button" class="btn btn-primary btn-sm" id="addAppointmentTypeBtn">
+                                        <i class="fas fa-plus"></i> Add Type
+                                    </button>
+                                </div>
+
+                                <div id="appointmentTypesList">
+                                    <!-- Appointment type cards will be populated here -->
+                                </div>
+                            </div>
+
+                            <!-- Practice Information Tab -->
+                            <div class="tab-pane fade" id="practice" role="tabpanel">
+                                <h6 class="mb-3">Practice Information</h6>
+                                <form id="practiceInfoForm">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="practiceName" class="form-label">Practice Name</label>
+                                                <input type="text" class="form-control" id="practiceName" name="full_name" required>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="practicePhone" class="form-label">Phone</label>
+                                                <input type="tel" class="form-control" id="practicePhone" name="phone" required>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-8">
+                                            <div class="mb-3">
+                                                <label for="practiceAddress" class="form-label">Address</label>
+                                                <input type="text" class="form-control" id="practiceAddress" name="address_street" placeholder="Street Address">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="mb-3">
+                                                <label for="practiceCity" class="form-label">City</label>
+                                                <input type="text" class="form-control" id="practiceCity" name="address_city">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary">Save Practice Information</button>
+                                </form>
                             </div>
                         </div>
                     </div>
@@ -186,6 +811,184 @@
                     </div>
                 </div>
 
+                <!-- System Health and Status Monitoring Section -->
+                <div class="card mb-4 border-info">
+                    <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="fas fa-heartbeat"></i> System Health & Status Monitoring
+                        </h5>
+                        <div class="d-flex align-items-center">
+                            <button type="button" class="btn btn-sm btn-outline-light me-2" id="refreshHealthStatus">
+                                <i class="fas fa-sync-alt"></i> Refresh
+                            </button>
+                            <span id="healthLastUpdated" class="small">Last updated: --:--</span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <!-- Real-time Status Indicators -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6 class="mb-3">System Component Status</h6>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card border-start border-3" id="emrStatusCard">
+                                    <div class="card-body">
+                                        <div class="d-flex align-items-center">
+                                            <div class="flex-shrink-0">
+                                                <div class="status-indicator" id="emrStatusIcon">
+                                                    <i class="fas fa-circle text-secondary"></i>
+                                                </div>
+                                            </div>
+                                            <div class="flex-grow-1 ms-3">
+                                                <h6 class="mb-1">EMR Connectivity</h6>
+                                                <p class="mb-1 small" id="emrStatusText">Checking...</p>
+                                                <small class="text-muted" id="emrResponseTime">Response time: --ms</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card border-start border-3" id="voiceStatusCard">
+                                    <div class="card-body">
+                                        <div class="d-flex align-items-center">
+                                            <div class="flex-shrink-0">
+                                                <div class="status-indicator" id="voiceStatusIcon">
+                                                    <i class="fas fa-circle text-secondary"></i>
+                                                </div>
+                                            </div>
+                                            <div class="flex-grow-1 ms-3">
+                                                <h6 class="mb-1">Voice Services</h6>
+                                                <p class="mb-1 small" id="voiceStatusText">Checking...</p>
+                                                <small class="text-muted" id="voiceSuccessRate">Success rate: --%</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card border-start border-3" id="webStatusCard">
+                                    <div class="card-body">
+                                        <div class="d-flex align-items-center">
+                                            <div class="flex-shrink-0">
+                                                <div class="status-indicator" id="webStatusIcon">
+                                                    <i class="fas fa-circle text-secondary"></i>
+                                                </div>
+                                            </div>
+                                            <div class="flex-grow-1 ms-3">
+                                                <h6 class="mb-1">Web Interface</h6>
+                                                <p class="mb-1 small" id="webStatusText">Checking...</p>
+                                                <small class="text-muted" id="webLoadTime">Load time: --ms</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Performance Metrics -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6 class="mb-3">Performance Metrics</h6>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card bg-light">
+                                    <div class="card-body text-center">
+                                        <h6 class="card-title">System Uptime</h6>
+                                        <h3 id="systemUptime" class="text-primary">--%</h3>
+                                        <small class="text-muted">Last 24 hours</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card bg-light">
+                                    <div class="card-body text-center">
+                                        <h6 class="card-title">Avg Response Time</h6>
+                                        <h3 id="avgResponseTime" class="text-info">--ms</h3>
+                                        <small class="text-muted">API endpoints</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card bg-light">
+                                    <div class="card-body text-center">
+                                        <h6 class="card-title">Call Volume</h6>
+                                        <h3 id="callVolume" class="text-success">--</h3>
+                                        <small class="text-muted">Today</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card bg-light">
+                                    <div class="card-body text-center">
+                                        <h6 class="card-title">Error Rate</h6>
+                                        <h3 id="errorRate" class="text-warning">--%</h3>
+                                        <small class="text-muted">Last hour</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Connection Testing -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6 class="mb-3">Connection Testing</h6>
+                            </div>
+                            <div class="col-md-4">
+                                <button type="button" class="btn btn-outline-primary btn-sm me-2" id="testEmrConnection">
+                                    <i class="fas fa-vial"></i> Test EMR
+                                </button>
+                                <span id="emrTestResult" class="small text-muted"></span>
+                            </div>
+                            <div class="col-md-4">
+                                <button type="button" class="btn btn-outline-info btn-sm me-2" id="testVoiceServices">
+                                    <i class="fas fa-microphone"></i> Test Voice
+                                </button>
+                                <span id="voiceTestResult" class="small text-muted"></span>
+                            </div>
+                            <div class="col-md-4">
+                                <button type="button" class="btn btn-outline-success btn-sm me-2" id="testWebInterface">
+                                    <i class="fas fa-globe"></i> Test Web
+                                </button>
+                                <span id="webTestResult" class="small text-muted"></span>
+                            </div>
+                        </div>
+
+                        <!-- Alert Notifications Area -->
+                        <div class="row mb-4" id="systemAlertsSection" style="display: none;">
+                            <div class="col-12">
+                                <h6 class="mb-3">System Alerts</h6>
+                                <div id="systemAlerts"></div>
+                            </div>
+                        </div>
+
+                        <!-- System Management Tools -->
+                        <div class="row">
+                            <div class="col-12">
+                                <h6 class="mb-3">System Management</h6>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-center">
+                                    <button type="button" class="btn btn-warning btn-sm me-2" id="restartSystem" data-bs-toggle="modal" data-bs-target="#restartConfirmModal">
+                                        <i class="fas fa-redo"></i> Restart System
+                                    </button>
+                                    <button type="button" class="btn btn-info btn-sm me-2" id="viewErrorLogs" data-bs-toggle="modal" data-bs-target="#errorLogsModal">
+                                        <i class="fas fa-exclamation-triangle"></i> View Error Logs
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-center justify-content-end">
+                                    <span class="me-2 small text-muted">Need help?</span>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm" id="supportInfo" data-bs-toggle="modal" data-bs-target="#supportInfoModal">
+                                        <i class="fas fa-life-ring"></i> Technical Support
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="row">
                     <div class="col-md-4">
                         <div class="card">
@@ -220,6 +1023,9 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/static/dashboard.js"></script>
+    <script src="/static/configuration-wizard.js"></script>
+    <script src="/static/health-monitoring.js"></script>
 
     <script>
         // Input Validation and Sanitization Utilities
@@ -629,6 +1435,7 @@
 
             init() {
                 this.setupEventListeners();
+                this.setupBulkOperations(); // Story 3.4
                 this.loadProviders();
                 this.loadTodaysAppointments();
                 this.setDefaultDates();
@@ -960,10 +1767,40 @@
                                 </div>
                             ` : ''}
                             ${appointment.description ? `
-                                <div class="text-muted small">
+                                <div class="text-muted small mb-3">
                                     <i class="fas fa-info-circle"></i> ${this.escapeHtml(appointment.description)}
                                 </div>
                             ` : ''}
+
+                            <!-- Action buttons for Story 3.4 -->
+                            <div class="d-flex justify-content-between align-items-center mt-auto">
+                                <div class="form-check">
+                                    <input class="form-check-input appointment-checkbox" type="checkbox"
+                                           value="${appointment.id}" id="appt-${appointment.id}">
+                                    <label class="form-check-label" for="appt-${appointment.id}">
+                                        <small class="text-muted">Select</small>
+                                    </label>
+                                </div>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <button type="button" class="btn btn-outline-primary btn-sm"
+                                            onclick="appointmentManager.editAppointment('${appointment.id}')"
+                                            title="Edit Appointment"
+                                            ${appointment.status === 'cancelled' ? 'disabled' : ''}>
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-outline-danger btn-sm"
+                                            onclick="appointmentManager.cancelAppointment('${appointment.id}')"
+                                            title="Cancel Appointment"
+                                            ${appointment.status === 'cancelled' ? 'disabled' : ''}>
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-outline-info btn-sm"
+                                            onclick="appointmentManager.showAppointmentDetails('${appointment.id}')"
+                                            title="View Details">
+                                        <i class="fas fa-info-circle"></i>
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 `;
@@ -1032,6 +1869,1326 @@
                     clearInterval(this.refreshInterval);
                     this.refreshInterval = null;
                 }
+            }
+
+            // ===================================================================
+            // Story 3.4: Manual Appointment Override and Management Methods
+            // ===================================================================
+
+            /**
+             * Edit appointment - opens edit modal with appointment data
+             */
+            async editAppointment(appointmentId) {
+                try {
+                    const appointment = this.appointments.find(apt => apt.id === appointmentId);
+                    if (!appointment) {
+                        throw new Error('Appointment not found');
+                    }
+
+                    // Populate edit modal
+                    document.getElementById('editAppointmentId').value = appointmentId;
+                    document.getElementById('editPatientName').value = appointment.patient_name || '';
+                    document.getElementById('editProvider').value = appointment.provider_id || '';
+
+                    // Parse appointment date and time
+                    if (appointment.start) {
+                        const startDate = new Date(appointment.start);
+                        document.getElementById('editDate').value = startDate.toISOString().split('T')[0];
+                        document.getElementById('editStartTime').value = startDate.toTimeString().slice(0, 5);
+                    }
+
+                    document.getElementById('editNotes').value = appointment.description || '';
+
+                    // Show the modal
+                    const modal = new bootstrap.Modal(document.getElementById('editAppointmentModal'));
+                    modal.show();
+                } catch (error) {
+                    console.error('Error editing appointment:', error);
+                    ErrorHandler.showError('Failed to load appointment for editing');
+                }
+            }
+
+            /**
+             * Cancel appointment - opens cancellation modal
+             */
+            async cancelAppointment(appointmentId) {
+                try {
+                    const appointment = this.appointments.find(apt => apt.id === appointmentId);
+                    if (!appointment) {
+                        throw new Error('Appointment not found');
+                    }
+
+                    // Populate cancel modal
+                    document.getElementById('cancelAppointmentId').value = appointmentId;
+                    document.getElementById('cancelAppointmentDetails').innerHTML = `
+                        <div class="mb-2">
+                            <strong>Patient:</strong> ${this.escapeHtml(appointment.patient_name)}
+                        </div>
+                        <div class="mb-2">
+                            <strong>Provider:</strong> ${this.escapeHtml(appointment.provider_name)}
+                        </div>
+                        <div class="mb-2">
+                            <strong>Time:</strong> ${appointment.time_display || 'Time TBD'}
+                        </div>
+                    `;
+
+                    // Show the modal
+                    const modal = new bootstrap.Modal(document.getElementById('cancelAppointmentModal'));
+                    modal.show();
+                } catch (error) {
+                    console.error('Error canceling appointment:', error);
+                    ErrorHandler.showError('Failed to load appointment for cancellation');
+                }
+            }
+
+            /**
+             * Show appointment details in modal
+             */
+            async showAppointmentDetails(appointmentId) {
+                try {
+                    const appointment = this.appointments.find(apt => apt.id === appointmentId);
+                    if (!appointment) {
+                        throw new Error('Appointment not found');
+                    }
+
+                    // Create details modal dynamically
+                    const modalHtml = `
+                        <div class="modal fade" id="appointmentDetailsModal" tabindex="-1">
+                            <div class="modal-dialog modal-lg">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">
+                                            <i class="fas fa-info-circle"></i> Appointment Details
+                                        </h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <h6>Patient Information</h6>
+                                                <p><strong>Name:</strong> ${this.escapeHtml(appointment.patient_name)}</p>
+                                                <p><strong>ID:</strong> ${this.escapeHtml(appointment.patient_id || 'N/A')}</p>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <h6>Appointment Information</h6>
+                                                <p><strong>Provider:</strong> ${this.escapeHtml(appointment.provider_name)}</p>
+                                                <p><strong>Time:</strong> ${appointment.time_display || 'Time TBD'}</p>
+                                                <p><strong>Status:</strong> <span class="badge bg-${this.getStatusBootstrapClass(appointment.status)}">${appointment.status}</span></p>
+                                                <p><strong>Type:</strong> ${this.escapeHtml(appointment.appointment_type || 'Standard')}</p>
+                                            </div>
+                                        </div>
+                                        ${appointment.description ? `
+                                            <div class="mt-3">
+                                                <h6>Notes</h6>
+                                                <p>${this.escapeHtml(appointment.description)}</p>
+                                            </div>
+                                        ` : ''}
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                        <button type="button" class="btn btn-primary" onclick="appointmentManager.editAppointment('${appointmentId}')">
+                                            <i class="fas fa-edit"></i> Edit
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+
+                    // Remove existing modal if present
+                    const existingModal = document.getElementById('appointmentDetailsModal');
+                    if (existingModal) {
+                        existingModal.remove();
+                    }
+
+                    // Add modal to DOM and show
+                    document.body.insertAdjacentHTML('beforeend', modalHtml);
+                    const modal = new bootstrap.Modal(document.getElementById('appointmentDetailsModal'));
+                    modal.show();
+
+                    // Remove modal from DOM when hidden
+                    document.getElementById('appointmentDetailsModal').addEventListener('hidden.bs.modal', function() {
+                        this.remove();
+                    });
+                } catch (error) {
+                    console.error('Error showing appointment details:', error);
+                    ErrorHandler.showError('Failed to load appointment details');
+                }
+            }
+
+            /**
+             * Handle bulk operations
+             */
+            setupBulkOperations() {
+                // Monitor checkbox changes to show/hide bulk operations
+                document.addEventListener('change', (e) => {
+                    if (e.target.classList.contains('appointment-checkbox')) {
+                        this.updateBulkOperationsVisibility();
+                    }
+                });
+
+                // Handle bulk reschedule
+                document.getElementById('bulkRescheduleBtn').addEventListener('click', () => {
+                    this.handleBulkReschedule();
+                });
+
+                // Handle bulk cancel
+                document.getElementById('bulkCancelBtn').addEventListener('click', () => {
+                    this.handleBulkCancel();
+                });
+
+                // Handle create manual appointment
+                document.getElementById('createManualAppointmentBtn').addEventListener('click', () => {
+                    this.showCreateManualAppointmentModal();
+                });
+            }
+
+            /**
+             * Update bulk operations visibility based on selected checkboxes
+             */
+            updateBulkOperationsVisibility() {
+                const selectedCheckboxes = document.querySelectorAll('.appointment-checkbox:checked');
+                const bulkGroup = document.getElementById('bulkOperationsGroup');
+
+                if (selectedCheckboxes.length > 0) {
+                    bulkGroup.style.display = 'inline-flex';
+                } else {
+                    bulkGroup.style.display = 'none';
+                }
+            }
+
+            /**
+             * Handle bulk reschedule operation
+             */
+            async handleBulkReschedule() {
+                const selectedIds = Array.from(document.querySelectorAll('.appointment-checkbox:checked'))
+                    .map(cb => cb.value);
+
+                if (selectedIds.length === 0) {
+                    ErrorHandler.showError('Please select appointments to reschedule');
+                    return;
+                }
+
+                // Simple prompt for new time (in a real implementation, this would be a proper modal)
+                const newTime = prompt('Enter new date and time (YYYY-MM-DD HH:MM):');
+                if (!newTime) return;
+
+                try {
+                    const response = await fetch('/api/v1/appointments/bulk', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            operation: 'reschedule',
+                            appointment_ids: selectedIds,
+                            new_params: { new_time: newTime },
+                            staff_member_id: 'current_user' // In real app, get from session
+                        })
+                    });
+
+                    if (!response.ok) throw new Error('Bulk reschedule failed');
+
+                    const result = await response.json();
+                    ErrorHandler.showSuccess(`Successfully rescheduled ${result.results.length} appointments`);
+                    this.loadAppointments(); // Refresh display
+                    this.clearSelections();
+                } catch (error) {
+                    console.error('Bulk reschedule error:', error);
+                    ErrorHandler.showError('Failed to reschedule appointments');
+                }
+            }
+
+            /**
+             * Handle bulk cancel operation
+             */
+            async handleBulkCancel() {
+                const selectedIds = Array.from(document.querySelectorAll('.appointment-checkbox:checked'))
+                    .map(cb => cb.value);
+
+                if (selectedIds.length === 0) {
+                    ErrorHandler.showError('Please select appointments to cancel');
+                    return;
+                }
+
+                const reason = prompt('Enter cancellation reason:');
+                if (!reason) return;
+
+                if (!confirm(`Cancel ${selectedIds.length} selected appointments?`)) return;
+
+                try {
+                    const response = await fetch('/api/v1/appointments/bulk', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            operation: 'cancel',
+                            appointment_ids: selectedIds,
+                            new_params: { reason: reason },
+                            staff_member_id: 'current_user' // In real app, get from session
+                        })
+                    });
+
+                    if (!response.ok) throw new Error('Bulk cancellation failed');
+
+                    const result = await response.json();
+                    ErrorHandler.showSuccess(`Successfully cancelled ${result.results.length} appointments`);
+                    this.loadAppointments(); // Refresh display
+                    this.clearSelections();
+                } catch (error) {
+                    console.error('Bulk cancel error:', error);
+                    ErrorHandler.showError('Failed to cancel appointments');
+                }
+            }
+
+            /**
+             * Clear all checkbox selections
+             */
+            clearSelections() {
+                document.querySelectorAll('.appointment-checkbox:checked').forEach(cb => {
+                    cb.checked = false;
+                });
+                this.updateBulkOperationsVisibility();
+            }
+
+            /**
+             * Show manual appointment creation modal
+             */
+            showCreateManualAppointmentModal() {
+                // Reset the form
+                document.getElementById('createManualAppointmentForm').reset();
+                document.getElementById('manualSelectedPatient').value = '';
+                document.getElementById('manualPatientId').value = '';
+                document.getElementById('patientSearchResults').style.display = 'none';
+
+                // Show the modal
+                const modal = new bootstrap.Modal(document.getElementById('createManualAppointmentModal'));
+                modal.show();
+            }
+
+            /**
+             * Get Bootstrap class for status badge
+             */
+            getStatusBootstrapClass(status) {
+                switch (status?.toLowerCase()) {
+                    case 'booked': return 'primary';
+                    case 'arrived': return 'info';
+                    case 'fulfilled': return 'success';
+                    case 'cancelled': return 'danger';
+                    case 'noshow': return 'warning';
+                    default: return 'secondary';
+                }
+            }
+        }
+
+        // Setup Wizard Management
+        class SetupWizard {
+            constructor() {
+                this.currentStep = 1;
+                this.totalSteps = 4;
+                this.wizardData = {};
+                this.init();
+            }
+
+            init() {
+                this.setupEventListeners();
+                this.checkFirstTimeSetup();
+            }
+
+            setupEventListeners() {
+                // Navigation buttons
+                document.getElementById('wizardNextBtn').addEventListener('click', () => {
+                    this.nextStep();
+                });
+
+                document.getElementById('wizardPrevBtn').addEventListener('click', () => {
+                    this.previousStep();
+                });
+
+                document.getElementById('wizardFinishBtn').addEventListener('click', () => {
+                    this.finishSetup();
+                });
+
+                // Show/hide wizard buttons
+                document.getElementById('showWizardBtn').addEventListener('click', () => {
+                    this.showWizard();
+                });
+
+                document.getElementById('skipWizardBtn').addEventListener('click', () => {
+                    this.hideWizard();
+                });
+            }
+
+            async checkFirstTimeSetup() {
+                try {
+                    const response = await fetch('/api/v1/config');
+                    const result = await response.json();
+
+                    if (result.status === 'success') {
+                        const config = result.data;
+
+                        // Check if basic setup is incomplete
+                        const hasProviders = config.providers && config.providers.length > 0;
+                        const hasPracticeInfo = config.practice_information && config.practice_information.full_name;
+
+                        if (!hasProviders || !hasPracticeInfo) {
+                            this.showWizard();
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error checking setup status:', error);
+                }
+            }
+
+            showWizard() {
+                document.getElementById('setupWizardCard').style.display = 'block';
+                document.getElementById('configurationCard').style.display = 'none';
+                this.currentStep = 1;
+                this.updateStepDisplay();
+            }
+
+            hideWizard() {
+                document.getElementById('setupWizardCard').style.display = 'none';
+                document.getElementById('configurationCard').style.display = 'block';
+            }
+
+            nextStep() {
+                if (this.validateCurrentStep()) {
+                    this.saveCurrentStepData();
+
+                    if (this.currentStep < this.totalSteps) {
+                        this.currentStep++;
+                        this.updateStepDisplay();
+                    }
+                }
+            }
+
+            previousStep() {
+                if (this.currentStep > 1) {
+                    this.currentStep--;
+                    this.updateStepDisplay();
+                }
+            }
+
+            validateCurrentStep() {
+                switch (this.currentStep) {
+                    case 1:
+                        const practiceName = document.getElementById('wizardPracticeName').value.trim();
+                        const practicePhone = document.getElementById('wizardPracticePhone').value.trim();
+
+                        if (!practiceName || !practicePhone) {
+                            ErrorHandler.showError('Please fill in the required fields (Practice Name and Phone)', 'warning');
+                            return false;
+                        }
+                        return true;
+
+                    case 2:
+                        const providerName = document.getElementById('wizardProviderName').value.trim();
+
+                        if (!providerName) {
+                            ErrorHandler.showError('Please enter the provider name', 'warning');
+                            return false;
+                        }
+                        return true;
+
+                    case 3:
+                    case 4:
+                        return true; // No validation needed for these steps
+
+                    default:
+                        return true;
+                }
+            }
+
+            saveCurrentStepData() {
+                switch (this.currentStep) {
+                    case 1:
+                        this.wizardData.practiceInfo = {
+                            full_name: document.getElementById('wizardPracticeName').value.trim(),
+                            phone: document.getElementById('wizardPracticePhone').value.trim(),
+                            address: {
+                                street: document.getElementById('wizardPracticeAddress').value.trim(),
+                                city: document.getElementById('wizardPracticeCity').value.trim(),
+                                state: '',
+                                zip_code: '',
+                                country: 'USA'
+                            },
+                            fax: '',
+                            email: '',
+                            website: '',
+                            departments: [],
+                            greeting_customization: {
+                                phone_greeting: `Thank you for calling ${document.getElementById('wizardPracticeName').value.trim()}. How may we help you today?`,
+                                appointment_confirmation: `Hello, this is ${document.getElementById('wizardPracticeName').value.trim()} calling to confirm your appointment.`,
+                                after_hours_message: `Thank you for calling ${document.getElementById('wizardPracticeName').value.trim()}. Our office is currently closed.`
+                            }
+                        };
+                        break;
+
+                    case 2:
+                        this.wizardData.provider = {
+                            id: 'provider_' + Date.now(),
+                            name: document.getElementById('wizardProviderName').value.trim(),
+                            specialty: document.getElementById('wizardProviderSpecialty').value.trim(),
+                            email: document.getElementById('wizardProviderEmail').value.trim(),
+                            phone: document.getElementById('wizardProviderPhone').value.trim(),
+                            active: true,
+                            schedule: {
+                                monday: {start: "09:00", end: "17:00", available: true},
+                                tuesday: {start: "09:00", end: "17:00", available: true},
+                                wednesday: {start: "09:00", end: "17:00", available: true},
+                                thursday: {start: "09:00", end: "17:00", available: true},
+                                friday: {start: "09:00", end: "17:00", available: true},
+                                saturday: {available: false},
+                                sunday: {available: false}
+                            },
+                            preferences: {
+                                appointment_duration_minutes: 30,
+                                buffer_time_minutes: 15,
+                                max_appointments_per_day: 20,
+                                appointment_types: ["consultation", "follow_up", "new_patient"]
+                            }
+                        };
+                        break;
+
+                    case 3:
+                        const selectedTemplate = document.querySelector('input[name="hoursTemplate"]:checked').value;
+                        this.wizardData.businessHours = this.getHoursTemplate(selectedTemplate);
+                        break;
+
+                    case 4:
+                        this.wizardData.appointmentTypes = [];
+
+                        if (document.getElementById('aptConsultation').checked) {
+                            this.wizardData.appointmentTypes.push({
+                                id: 'consultation',
+                                name: 'Consultation',
+                                duration_minutes: 30,
+                                description: 'General consultation appointment',
+                                active: true,
+                                scheduling_rules: {
+                                    advance_booking_days: 30,
+                                    min_notice_hours: 24,
+                                    allow_online_booking: true
+                                }
+                            });
+                        }
+
+                        if (document.getElementById('aptFollowUp').checked) {
+                            this.wizardData.appointmentTypes.push({
+                                id: 'follow_up',
+                                name: 'Follow-up',
+                                duration_minutes: 20,
+                                description: 'Follow-up appointment for existing patients',
+                                active: true,
+                                scheduling_rules: {
+                                    advance_booking_days: 14,
+                                    min_notice_hours: 4,
+                                    allow_online_booking: true
+                                }
+                            });
+                        }
+
+                        if (document.getElementById('aptNewPatient').checked) {
+                            this.wizardData.appointmentTypes.push({
+                                id: 'new_patient',
+                                name: 'New Patient',
+                                duration_minutes: 45,
+                                description: 'Initial appointment for new patients',
+                                active: true,
+                                scheduling_rules: {
+                                    advance_booking_days: 60,
+                                    min_notice_hours: 48,
+                                    allow_online_booking: false
+                                }
+                            });
+                        }
+                        break;
+                }
+            }
+
+            getHoursTemplate(template) {
+                switch (template) {
+                    case 'extended':
+                        return {
+                            monday: {start: "08:00", end: "18:00"},
+                            tuesday: {start: "08:00", end: "18:00"},
+                            wednesday: {start: "08:00", end: "18:00"},
+                            thursday: {start: "08:00", end: "18:00"},
+                            friday: {start: "08:00", end: "18:00"},
+                            saturday: {closed: true},
+                            sunday: {closed: true}
+                        };
+
+                    case 'weekend':
+                        return {
+                            monday: {start: "09:00", end: "17:00"},
+                            tuesday: {start: "09:00", end: "17:00"},
+                            wednesday: {start: "09:00", end: "17:00"},
+                            thursday: {start: "09:00", end: "17:00"},
+                            friday: {start: "09:00", end: "17:00"},
+                            saturday: {start: "09:00", end: "13:00"},
+                            sunday: {closed: true}
+                        };
+
+                    default: // standard
+                        return {
+                            monday: {start: "09:00", end: "17:00"},
+                            tuesday: {start: "09:00", end: "17:00"},
+                            wednesday: {start: "09:00", end: "17:00"},
+                            thursday: {start: "09:00", end: "17:00"},
+                            friday: {start: "09:00", end: "17:00"},
+                            saturday: {closed: true},
+                            sunday: {closed: true}
+                        };
+                }
+            }
+
+            updateStepDisplay() {
+                // Hide all steps
+                document.querySelectorAll('.wizard-step').forEach(step => {
+                    step.style.display = 'none';
+                });
+
+                // Show current step
+                document.getElementById(`step${this.currentStep}`).style.display = 'block';
+
+                // Update progress
+                const progress = (this.currentStep / this.totalSteps) * 100;
+                document.getElementById('wizardProgress').style.width = `${progress}%`;
+                document.getElementById('currentStep').textContent = this.currentStep;
+                document.getElementById('progressPercent').textContent = Math.round(progress);
+
+                // Update navigation buttons
+                document.getElementById('wizardPrevBtn').disabled = this.currentStep === 1;
+
+                if (this.currentStep === this.totalSteps) {
+                    document.getElementById('wizardNextBtn').style.display = 'none';
+                    document.getElementById('wizardFinishBtn').style.display = 'block';
+                } else {
+                    document.getElementById('wizardNextBtn').style.display = 'block';
+                    document.getElementById('wizardFinishBtn').style.display = 'none';
+                }
+            }
+
+            async finishSetup() {
+                try {
+                    // Save the final step data
+                    this.saveCurrentStepData();
+
+                    // Prepare configuration update
+                    const configUpdate = {
+                        practice_information: this.wizardData.practiceInfo,
+                        providers: [this.wizardData.provider],
+                        operational_hours: this.wizardData.businessHours,
+                        appointment_types: this.wizardData.appointmentTypes
+                    };
+
+                    // Save configuration
+                    const response = await fetch('/api/v1/config', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(configUpdate)
+                    });
+
+                    if (response.ok) {
+                        ErrorHandler.showError('Setup completed successfully! Your practice is now configured.', 'info');
+
+                        // Hide wizard and show configuration
+                        this.hideWizard();
+
+                        // Reload configuration data
+                        if (window.configManager) {
+                            window.configManager.loadConfiguration();
+                        }
+                    } else {
+                        throw new Error('Failed to save configuration');
+                    }
+
+                } catch (error) {
+                    console.error('Error completing setup:', error);
+                    ErrorHandler.showError('Failed to complete setup. Please try again.', 'error');
+                }
+            }
+        }
+
+        // Configuration Management
+        class ConfigurationManager {
+            constructor() {
+                this.providers = [];
+                this.appointmentTypes = [];
+                this.practiceInfo = {};
+                this.businessHours = {};
+                this.init();
+            }
+
+            init() {
+                this.setupEventListeners();
+                this.loadConfiguration();
+            }
+
+            setupEventListeners() {
+                // Provider management
+                document.getElementById('addProviderBtn').addEventListener('click', () => {
+                    this.showProviderModal();
+                });
+
+                // Appointment type management
+                document.getElementById('addAppointmentTypeBtn').addEventListener('click', () => {
+                    this.showAppointmentTypeModal();
+                });
+
+                // Business hours form
+                document.getElementById('businessHoursForm').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.saveBusinessHours();
+                });
+
+                // Practice info form
+                document.getElementById('practiceInfoForm').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.savePracticeInfo();
+                });
+            }
+
+            async loadConfiguration() {
+                try {
+                    const response = await fetch('/api/v1/config');
+                    const result = await response.json();
+
+                    if (result.status === 'success') {
+                        this.providers = result.data.providers || [];
+                        this.appointmentTypes = result.data.appointment_types || [];
+                        this.practiceInfo = result.data.practice_information || {};
+                        this.businessHours = result.data.operational_hours || {};
+
+                        this.updateProvidersDisplay();
+                        this.updateAppointmentTypesDisplay();
+                        this.updateBusinessHoursForm();
+                        this.updatePracticeInfoForm();
+                    }
+                } catch (error) {
+                    console.error('Error loading configuration:', error);
+                    ErrorHandler.showError('Failed to load configuration', 'error');
+                }
+            }
+
+            updateProvidersDisplay() {
+                const container = document.getElementById('providersList');
+                container.innerHTML = '';
+
+                if (this.providers.length === 0) {
+                    container.innerHTML = `
+                        <div class="text-center py-4 text-muted">
+                            <i class="fas fa-user-md fa-3x mb-3"></i>
+                            <p>No providers configured. Click "Add Provider" to get started.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                this.providers.forEach((provider, index) => {
+                    const providerCard = this.createProviderCard(provider, index);
+                    container.appendChild(providerCard);
+                });
+            }
+
+            createProviderCard(provider, index) {
+                const card = document.createElement('div');
+                card.className = 'card mb-3';
+
+                const statusClass = provider.active ? 'text-success' : 'text-muted';
+                const statusIcon = provider.active ? 'fas fa-check-circle' : 'fas fa-pause-circle';
+
+                card.innerHTML = `
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="card-title mb-1">
+                                    ${this.escapeHtml(provider.name)}
+                                    <span class="${statusClass} ms-2">
+                                        <i class="${statusIcon}"></i>
+                                    </span>
+                                </h6>
+                                <p class="text-muted small mb-1">${this.escapeHtml(provider.specialty || 'No specialty specified')}</p>
+                                <p class="text-muted small mb-0">
+                                    <i class="fas fa-envelope me-1"></i> ${this.escapeHtml(provider.email || 'No email')}
+                                    <i class="fas fa-phone ms-3 me-1"></i> ${this.escapeHtml(provider.phone || 'No phone')}
+                                </p>
+                            </div>
+                            <div class="btn-group btn-group-sm">
+                                <button type="button" class="btn btn-outline-primary" onclick="configManager.editProvider(${index})">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button type="button" class="btn btn-outline-danger" onclick="configManager.deleteProvider(${index})">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                return card;
+            }
+
+            updateAppointmentTypesDisplay() {
+                const container = document.getElementById('appointmentTypesList');
+                container.innerHTML = '';
+
+                if (this.appointmentTypes.length === 0) {
+                    container.innerHTML = `
+                        <div class="text-center py-4 text-muted">
+                            <i class="fas fa-calendar fa-3x mb-3"></i>
+                            <p>No appointment types configured. Click "Add Type" to get started.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                this.appointmentTypes.forEach((type, index) => {
+                    const typeCard = this.createAppointmentTypeCard(type, index);
+                    container.appendChild(typeCard);
+                });
+            }
+
+            createAppointmentTypeCard(type, index) {
+                const card = document.createElement('div');
+                card.className = 'card mb-3';
+
+                const statusClass = type.active ? 'text-success' : 'text-muted';
+                const statusIcon = type.active ? 'fas fa-check-circle' : 'fas fa-pause-circle';
+
+                card.innerHTML = `
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="card-title mb-1">
+                                    ${this.escapeHtml(type.name)}
+                                    <span class="${statusClass} ms-2">
+                                        <i class="${statusIcon}"></i>
+                                    </span>
+                                </h6>
+                                <p class="text-muted small mb-1">${type.duration_minutes} minutes</p>
+                                <p class="text-muted small mb-0">${this.escapeHtml(type.description || 'No description')}</p>
+                            </div>
+                            <div class="btn-group btn-group-sm">
+                                <button type="button" class="btn btn-outline-primary" onclick="configManager.editAppointmentType(${index})">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button type="button" class="btn btn-outline-danger" onclick="configManager.deleteAppointmentType(${index})">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                return card;
+            }
+
+            updateBusinessHoursForm() {
+                const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+
+                days.forEach(day => {
+                    const dayData = this.businessHours[day] || {};
+                    const startInput = document.querySelector(`input[name="${day}_start"]`);
+                    const endInput = document.querySelector(`input[name="${day}_end"]`);
+                    const closedInput = document.querySelector(`input[name="${day}_closed"]`);
+
+                    if (dayData.closed || !dayData.start) {
+                        closedInput.checked = true;
+                        startInput.disabled = true;
+                        endInput.disabled = true;
+                        startInput.value = dayData.start || "09:00";
+                        endInput.value = dayData.end || "17:00";
+                    } else {
+                        closedInput.checked = false;
+                        startInput.disabled = false;
+                        endInput.disabled = false;
+                        startInput.value = dayData.start || "09:00";
+                        endInput.value = dayData.end || "17:00";
+                    }
+
+                    // Add event listeners for closed checkboxes
+                    closedInput.addEventListener('change', (e) => {
+                        const isChecked = e.target.checked;
+                        startInput.disabled = isChecked;
+                        endInput.disabled = isChecked;
+                    });
+                });
+            }
+
+            updatePracticeInfoForm() {
+                if (this.practiceInfo.full_name) {
+                    document.getElementById('practiceName').value = this.practiceInfo.full_name;
+                }
+                if (this.practiceInfo.phone) {
+                    document.getElementById('practicePhone').value = this.practiceInfo.phone;
+                }
+                if (this.practiceInfo.address && this.practiceInfo.address.street) {
+                    document.getElementById('practiceAddress').value = this.practiceInfo.address.street;
+                }
+                if (this.practiceInfo.address && this.practiceInfo.address.city) {
+                    document.getElementById('practiceCity').value = this.practiceInfo.address.city;
+                }
+            }
+
+            showProviderModal() {
+                // Create and show provider modal
+                const modal = this.createProviderModal();
+                document.body.appendChild(modal);
+                const bsModal = new bootstrap.Modal(modal);
+                bsModal.show();
+
+                // Clean up modal when hidden
+                modal.addEventListener('hidden.bs.modal', () => {
+                    modal.remove();
+                });
+            }
+
+            createProviderModal(provider = null, index = null) {
+                const isEdit = provider !== null;
+                const modal = document.createElement('div');
+                modal.className = 'modal fade';
+                modal.innerHTML = `
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">${isEdit ? 'Edit' : 'Add'} Provider</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <form id="providerForm">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label class="form-label">Name *</label>
+                                                <input type="text" class="form-control" name="name" required value="${provider?.name || ''}">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label class="form-label">Specialty</label>
+                                                <input type="text" class="form-control" name="specialty" value="${provider?.specialty || ''}">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label class="form-label">Email</label>
+                                                <input type="email" class="form-control" name="email" value="${provider?.email || ''}">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label class="form-label">Phone</label>
+                                                <input type="tel" class="form-control" name="phone" value="${provider?.phone || ''}">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="active" ${provider?.active !== false ? 'checked' : ''}>
+                                            <label class="form-check-label">Active</label>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="button" class="btn btn-primary" onclick="configManager.saveProvider(${index})">
+                                    ${isEdit ? 'Update' : 'Add'} Provider
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                return modal;
+            }
+
+            async saveProvider(index = null) {
+                const form = document.getElementById('providerForm');
+                const formData = new FormData(form);
+
+                const provider = {
+                    id: index !== null ? this.providers[index].id : 'provider_' + Date.now(),
+                    name: formData.get('name'),
+                    specialty: formData.get('specialty'),
+                    email: formData.get('email'),
+                    phone: formData.get('phone'),
+                    active: formData.has('active'),
+                    schedule: index !== null ? this.providers[index].schedule : this.getDefaultSchedule(),
+                    preferences: index !== null ? this.providers[index].preferences : this.getDefaultPreferences()
+                };
+
+                try {
+                    if (index !== null) {
+                        this.providers[index] = provider;
+                    } else {
+                        this.providers.push(provider);
+                    }
+
+                    await this.saveConfiguration('providers');
+                    this.updateProvidersDisplay();
+
+                    // Close modal
+                    const modal = form.closest('.modal');
+                    bootstrap.Modal.getInstance(modal).hide();
+
+                    ErrorHandler.showError(`Provider ${index !== null ? 'updated' : 'added'} successfully`, 'info');
+                } catch (error) {
+                    console.error('Error saving provider:', error);
+                    ErrorHandler.showError('Failed to save provider', 'error');
+                }
+            }
+
+            getDefaultSchedule() {
+                return {
+                    monday: {start: "09:00", end: "17:00", available: true},
+                    tuesday: {start: "09:00", end: "17:00", available: true},
+                    wednesday: {start: "09:00", end: "17:00", available: true},
+                    thursday: {start: "09:00", end: "17:00", available: true},
+                    friday: {start: "09:00", end: "17:00", available: true},
+                    saturday: {available: false},
+                    sunday: {available: false}
+                };
+            }
+
+            getDefaultPreferences() {
+                return {
+                    appointment_duration_minutes: 30,
+                    buffer_time_minutes: 15,
+                    max_appointments_per_day: 20,
+                    appointment_types: ["consultation", "follow_up", "new_patient"]
+                };
+            }
+
+            async saveConfiguration(section) {
+                const updateData = {};
+
+                if (section === 'providers' || !section) {
+                    updateData.providers = this.providers;
+                }
+                if (section === 'appointment_types' || !section) {
+                    updateData.appointment_types = this.appointmentTypes;
+                }
+                if (section === 'practice_information' || !section) {
+                    updateData.practice_information = this.practiceInfo;
+                }
+                if (section === 'operational_hours' || !section) {
+                    updateData.operational_hours = this.businessHours;
+                }
+
+                const response = await fetch('/api/v1/config', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(updateData)
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to save configuration');
+                }
+
+                return await response.json();
+            }
+
+            editProvider(index) {
+                const modal = this.createProviderModal(this.providers[index], index);
+                document.body.appendChild(modal);
+                const bsModal = new bootstrap.Modal(modal);
+                bsModal.show();
+
+                // Clean up modal when hidden
+                modal.addEventListener('hidden.bs.modal', () => {
+                    modal.remove();
+                });
+            }
+
+            deleteProvider(index) {
+                if (confirm(`Are you sure you want to delete provider "${this.providers[index].name}"?`)) {
+                    this.providers.splice(index, 1);
+                    this.saveConfiguration('providers');
+                    this.updateProvidersDisplay();
+                    ErrorHandler.showError('Provider deleted successfully', 'info');
+                }
+            }
+
+            async saveBusinessHours() {
+                const form = document.getElementById('businessHoursForm');
+                const formData = new FormData(form);
+
+                const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+                const businessHours = {};
+
+                days.forEach(day => {
+                    const closed = formData.has(`${day}_closed`);
+                    const start = formData.get(`${day}_start`);
+                    const end = formData.get(`${day}_end`);
+
+                    if (closed) {
+                        businessHours[day] = { closed: true };
+                    } else {
+                        // Validate time range
+                        if (start && end && start >= end) {
+                            throw new Error(`Invalid time range for ${day}: start time must be before end time`);
+                        }
+                        businessHours[day] = {
+                            start: start || "09:00",
+                            end: end || "17:00"
+                        };
+                    }
+                });
+
+                try {
+                    this.businessHours = businessHours;
+                    await this.saveConfiguration('operational_hours');
+                    ErrorHandler.showError('Business hours saved successfully', 'info');
+                } catch (error) {
+                    console.error('Error saving business hours:', error);
+                    ErrorHandler.showError(`Failed to save business hours: ${error.message}`, 'error');
+                }
+            }
+
+            async savePracticeInfo() {
+                const form = document.getElementById('practiceInfoForm');
+                const formData = new FormData(form);
+
+                const practiceInfo = {
+                    full_name: formData.get('full_name') || '',
+                    phone: formData.get('phone') || '',
+                    address: {
+                        street: formData.get('address_street') || '',
+                        city: formData.get('address_city') || '',
+                        state: this.practiceInfo.address?.state || '',
+                        zip_code: this.practiceInfo.address?.zip_code || '',
+                        country: this.practiceInfo.address?.country || 'USA'
+                    },
+                    fax: this.practiceInfo.fax || '',
+                    email: this.practiceInfo.email || '',
+                    website: this.practiceInfo.website || '',
+                    departments: this.practiceInfo.departments || [],
+                    greeting_customization: this.practiceInfo.greeting_customization || {
+                        phone_greeting: '',
+                        appointment_confirmation: '',
+                        after_hours_message: ''
+                    }
+                };
+
+                try {
+                    this.practiceInfo = practiceInfo;
+                    await this.saveConfiguration('practice_information');
+                    ErrorHandler.showError('Practice information saved successfully', 'info');
+                } catch (error) {
+                    console.error('Error saving practice info:', error);
+                    ErrorHandler.showError('Failed to save practice information', 'error');
+                }
+            }
+
+            showAppointmentTypeModal() {
+                // Create and show appointment type modal
+                const modal = this.createAppointmentTypeModal();
+                document.body.appendChild(modal);
+                const bsModal = new bootstrap.Modal(modal);
+                bsModal.show();
+
+                // Clean up modal when hidden
+                modal.addEventListener('hidden.bs.modal', () => {
+                    modal.remove();
+                });
+            }
+
+            createAppointmentTypeModal(appointmentType = null, index = null) {
+                const isEdit = appointmentType !== null;
+                const modal = document.createElement('div');
+                modal.className = 'modal fade';
+                modal.innerHTML = `
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">${isEdit ? 'Edit' : 'Add'} Appointment Type</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <form id="appointmentTypeForm">
+                                    <div class="mb-3">
+                                        <label class="form-label">Name *</label>
+                                        <input type="text" class="form-control" name="name" required value="${appointmentType?.name || ''}">
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label class="form-label">Duration (minutes) *</label>
+                                                <input type="number" class="form-control" name="duration_minutes" required min="5" max="480" value="${appointmentType?.duration_minutes || 30}">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <div class="form-check mt-4">
+                                                    <input class="form-check-input" type="checkbox" name="active" ${appointmentType?.active !== false ? 'checked' : ''}>
+                                                    <label class="form-check-label">Active</label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Description</label>
+                                        <textarea class="form-control" name="description" rows="3">${appointmentType?.description || ''}</textarea>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="button" class="btn btn-primary" onclick="configManager.saveAppointmentType(${index})">
+                                    ${isEdit ? 'Update' : 'Add'} Type
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                return modal;
+            }
+
+            async saveAppointmentType(index = null) {
+                const form = document.getElementById('appointmentTypeForm');
+                const formData = new FormData(form);
+
+                const appointmentType = {
+                    id: index !== null ? this.appointmentTypes[index].id : 'apt_type_' + Date.now(),
+                    name: formData.get('name'),
+                    duration_minutes: parseInt(formData.get('duration_minutes')),
+                    description: formData.get('description'),
+                    active: formData.has('active'),
+                    scheduling_rules: index !== null ? this.appointmentTypes[index].scheduling_rules : {
+                        advance_booking_days: 30,
+                        min_notice_hours: 24,
+                        allow_online_booking: true
+                    }
+                };
+
+                try {
+                    if (index !== null) {
+                        this.appointmentTypes[index] = appointmentType;
+                    } else {
+                        this.appointmentTypes.push(appointmentType);
+                    }
+
+                    await this.saveConfiguration('appointment_types');
+                    this.updateAppointmentTypesDisplay();
+
+                    // Close modal
+                    const modal = form.closest('.modal');
+                    bootstrap.Modal.getInstance(modal).hide();
+
+                    ErrorHandler.showError(`Appointment type ${index !== null ? 'updated' : 'added'} successfully`, 'info');
+                } catch (error) {
+                    console.error('Error saving appointment type:', error);
+                    ErrorHandler.showError('Failed to save appointment type', 'error');
+                }
+            }
+
+            editAppointmentType(index) {
+                const modal = this.createAppointmentTypeModal(this.appointmentTypes[index], index);
+                document.body.appendChild(modal);
+                const bsModal = new bootstrap.Modal(modal);
+                bsModal.show();
+
+                // Clean up modal when hidden
+                modal.addEventListener('hidden.bs.modal', () => {
+                    modal.remove();
+                });
+            }
+
+            deleteAppointmentType(index) {
+                if (confirm(`Are you sure you want to delete appointment type "${this.appointmentTypes[index].name}"?`)) {
+                    this.appointmentTypes.splice(index, 1);
+                    this.saveConfiguration('appointment_types');
+                    this.updateAppointmentTypesDisplay();
+                    ErrorHandler.showError('Appointment type deleted successfully', 'info');
+                }
+            }
+
+            applyHoursTemplate(template) {
+                const form = document.getElementById('businessHoursForm');
+                const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+
+                switch (template) {
+                    case 'standard':
+                        days.forEach((day, index) => {
+                            const startInput = form.querySelector(`input[name="${day}_start"]`);
+                            const endInput = form.querySelector(`input[name="${day}_end"]`);
+                            const closedInput = form.querySelector(`input[name="${day}_closed"]`);
+
+                            if (index < 5) { // Monday to Friday
+                                startInput.value = "09:00";
+                                endInput.value = "17:00";
+                                closedInput.checked = false;
+                                startInput.disabled = false;
+                                endInput.disabled = false;
+                            } else { // Weekend
+                                closedInput.checked = true;
+                                startInput.disabled = true;
+                                endInput.disabled = true;
+                            }
+                        });
+                        break;
+
+                    case 'extended':
+                        days.forEach((day, index) => {
+                            const startInput = form.querySelector(`input[name="${day}_start"]`);
+                            const endInput = form.querySelector(`input[name="${day}_end"]`);
+                            const closedInput = form.querySelector(`input[name="${day}_closed"]`);
+
+                            if (index < 5) { // Monday to Friday
+                                startInput.value = "08:00";
+                                endInput.value = "18:00";
+                                closedInput.checked = false;
+                                startInput.disabled = false;
+                                endInput.disabled = false;
+                            } else { // Weekend
+                                closedInput.checked = true;
+                                startInput.disabled = true;
+                                endInput.disabled = true;
+                            }
+                        });
+                        break;
+
+                    case 'weekend':
+                        days.forEach((day, index) => {
+                            const startInput = form.querySelector(`input[name="${day}_start"]`);
+                            const endInput = form.querySelector(`input[name="${day}_end"]`);
+                            const closedInput = form.querySelector(`input[name="${day}_closed"]`);
+
+                            if (index < 5) { // Monday to Friday
+                                startInput.value = "09:00";
+                                endInput.value = "17:00";
+                                closedInput.checked = false;
+                                startInput.disabled = false;
+                                endInput.disabled = false;
+                            } else if (index === 5) { // Saturday
+                                startInput.value = "09:00";
+                                endInput.value = "13:00";
+                                closedInput.checked = false;
+                                startInput.disabled = false;
+                                endInput.disabled = false;
+                            } else { // Sunday
+                                closedInput.checked = true;
+                                startInput.disabled = true;
+                                endInput.disabled = true;
+                            }
+                        });
+                        break;
+                }
+
+                ErrorHandler.showError(`Applied ${template} hours template`, 'info');
+            }
+
+            escapeHtml(text) {
+                if (!text) return '';
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
             }
         }
 
@@ -1285,13 +3442,564 @@
             // Initialize managers
             window.sessionManager = new SessionManager();
             window.appointmentManager = new AppointmentManager();
+            window.configManager = new ConfigurationManager();
+            window.setupWizard = new SetupWizard();
             const oauthManager = new OAuthManager();
 
             // Wrap critical async methods with error boundaries
             ErrorHandler.wrapAsyncMethod(window.appointmentManager, 'loadAppointments');
             ErrorHandler.wrapAsyncMethod(window.appointmentManager, 'loadTodaysAppointments');
             ErrorHandler.wrapAsyncMethod(window.appointmentManager, 'loadProviders');
+            ErrorHandler.wrapAsyncMethod(window.configManager, 'loadConfiguration');
+            ErrorHandler.wrapAsyncMethod(window.configManager, 'saveConfiguration');
+            ErrorHandler.wrapAsyncMethod(window.configManager, 'saveBusinessHours');
+            ErrorHandler.wrapAsyncMethod(window.configManager, 'savePracticeInfo');
+            ErrorHandler.wrapAsyncMethod(window.configManager, 'saveAppointmentType');
         });
     </script>
+
+    <!-- System Health Monitoring Modals -->
+
+    <!-- Error Logs Modal -->
+    <div class="modal fade" id="errorLogsModal" tabindex="-1" aria-labelledby="errorLogsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="errorLogsModalLabel">
+                        <i class="fas fa-exclamation-triangle"></i> System Error Logs
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="logSeverityFilter" class="form-label">Filter by Severity</label>
+                            <select class="form-select form-select-sm" id="logSeverityFilter">
+                                <option value="all">All Levels</option>
+                                <option value="error">Error</option>
+                                <option value="warning">Warning</option>
+                                <option value="info">Info</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="logSearchInput" class="form-label">Search Logs</label>
+                            <input type="text" class="form-control form-control-sm" id="logSearchInput" placeholder="Search error messages...">
+                        </div>
+                    </div>
+                    <div id="errorLogsList" style="max-height: 400px; overflow-y: auto;">
+                        <div class="text-center">
+                            <div class="spinner-border spinner-border-sm" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2">Loading error logs...</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="refreshErrorLogs">
+                        <i class="fas fa-sync-alt"></i> Refresh
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Restart Confirmation Modal -->
+    <div class="modal fade" id="restartConfirmModal" tabindex="-1" aria-labelledby="restartConfirmModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title text-warning" id="restartConfirmModalLabel">
+                        <i class="fas fa-exclamation-triangle"></i> Confirm System Restart
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-warning">
+                        <h6 class="alert-heading">⚠️ Important Notice</h6>
+                        <p>Restarting the system will:</p>
+                        <ul>
+                            <li>Temporarily interrupt all voice AI services</li>
+                            <li>Disconnect active user sessions</li>
+                            <li>Cause brief downtime (approximately 30-60 seconds)</li>
+                        </ul>
+                        <hr>
+                        <p class="mb-0">Are you sure you want to proceed with the system restart?</p>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="restartConfirmCheckbox">
+                        <label class="form-check-label" for="restartConfirmCheckbox">
+                            I understand the impact and want to restart the system
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-warning" id="confirmRestartBtn" disabled>
+                        <i class="fas fa-redo"></i> Restart System
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Support Information Modal -->
+    <div class="modal fade" id="supportInfoModal" tabindex="-1" aria-labelledby="supportInfoModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="supportInfoModalLabel">
+                        <i class="fas fa-life-ring"></i> Technical Support Information
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-12 mb-3">
+                            <h6>System Information</h6>
+                            <table class="table table-sm">
+                                <tbody>
+                                    <tr>
+                                        <td><strong>System Version:</strong></td>
+                                        <td id="systemVersion">0.1.0</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Environment:</strong></td>
+                                        <td id="systemEnvironment">Production</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Last Restart:</strong></td>
+                                        <td id="lastRestartTime">--</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Current Uptime:</strong></td>
+                                        <td id="currentUptime">--</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="col-12 mb-3">
+                            <h6>Emergency Contacts</h6>
+                            <div class="alert alert-info">
+                                <h6 class="alert-heading">For Technical Issues:</h6>
+                                <p class="mb-1"><strong>Phone:</strong> <span id="supportPhone">(555) 123-TECH</span></p>
+                                <p class="mb-1"><strong>Email:</strong> <span id="supportEmail">support@voiceai-platform.com</span></p>
+                                <p class="mb-0"><strong>Hours:</strong> 24/7 Emergency Support</p>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <h6>Quick Actions</h6>
+                            <div class="d-grid gap-2">
+                                <button type="button" class="btn btn-outline-primary btn-sm" id="generateSupportReport">
+                                    <i class="fas fa-file-alt"></i> Generate Support Report
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary btn-sm" id="downloadSystemLogs">
+                                    <i class="fas fa-download"></i> Download System Logs
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <a href="mailto:support@voiceai-platform.com" class="btn btn-primary">
+                        <i class="fas fa-envelope"></i> Contact Support
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Appointment Management Modals -->
+
+    <!-- Edit Appointment Modal -->
+    <div class="modal fade" id="editAppointmentModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-edit"></i> Edit Appointment
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editAppointmentForm">
+                        <input type="hidden" id="editAppointmentId">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="editPatientName" class="form-label">Patient Name</label>
+                                    <input type="text" class="form-control" id="editPatientName" readonly>
+                                    <div class="form-text">Patient information cannot be modified here</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="editProvider" class="form-label">Provider *</label>
+                                    <select class="form-select" id="editProvider" required>
+                                        <option value="">Select Provider</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="editDate" class="form-label">Date *</label>
+                                    <input type="date" class="form-control" id="editDate" required>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="editStartTime" class="form-label">Start Time *</label>
+                                    <input type="time" class="form-control" id="editStartTime" required>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="editEndTime" class="form-label">End Time *</label>
+                                    <input type="time" class="form-control" id="editEndTime" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editNotes" class="form-label">Notes</label>
+                            <textarea class="form-control" id="editNotes" rows="3" placeholder="Additional notes for this appointment"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editStaffMemberId" class="form-label">Staff Member ID *</label>
+                            <input type="text" class="form-control" id="editStaffMemberId" required placeholder="Your staff identifier">
+                            <div class="form-text">Required for audit trail</div>
+                        </div>
+                        <div id="editValidationWarnings" class="alert alert-warning" style="display: none;">
+                            <h6>Validation Warnings:</h6>
+                            <ul id="editWarningsList"></ul>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="saveAppointmentChanges">
+                        <i class="fas fa-save"></i> Save Changes
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cancel Appointment Modal -->
+    <div class="modal fade" id="cancelAppointmentModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title">
+                        <i class="fas fa-times-circle"></i> Cancel Appointment
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        This action will cancel the appointment and notify the EMR system.
+                    </div>
+                    <div id="cancelAppointmentDetails" class="mb-3">
+                        <!-- Appointment details will be populated here -->
+                    </div>
+                    <form id="cancelAppointmentForm">
+                        <input type="hidden" id="cancelAppointmentId">
+                        <div class="mb-3">
+                            <label for="cancelReason" class="form-label">Cancellation Reason *</label>
+                            <select class="form-select" id="cancelReason" required>
+                                <option value="">Select reason</option>
+                                <option value="patient_request">Patient Request</option>
+                                <option value="provider_unavailable">Provider Unavailable</option>
+                                <option value="emergency">Emergency</option>
+                                <option value="scheduling_conflict">Scheduling Conflict</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="cancelNotes" class="form-label">Additional Notes</label>
+                            <textarea class="form-control" id="cancelNotes" rows="3" placeholder="Additional details about the cancellation"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="cancelStaffMemberId" class="form-label">Staff Member ID *</label>
+                            <input type="text" class="form-control" id="cancelStaffMemberId" required placeholder="Your staff identifier">
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="notifyPatient">
+                            <label class="form-check-label" for="notifyPatient">
+                                Send notification to patient (if contact info available)
+                            </label>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Keep Appointment</button>
+                    <button type="button" class="btn btn-danger" id="confirmCancelAppointment">
+                        <i class="fas fa-times-circle"></i> Cancel Appointment
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Manual Appointment Creation Modal -->
+    <div class="modal fade" id="createManualAppointmentModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title">
+                        <i class="fas fa-plus-circle"></i> Create Manual Appointment
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="createManualAppointmentForm">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="mb-3">
+                                    <label for="manualPatientSearch" class="form-label">Patient Search *</label>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="manualPatientSearch" placeholder="Search by name or DOB" required>
+                                        <button type="button" class="btn btn-outline-secondary" id="searchPatientsBtn">
+                                            <i class="fas fa-search"></i> Search
+                                        </button>
+                                    </div>
+                                    <div id="patientSearchResults" class="mt-2" style="display: none;">
+                                        <!-- Patient search results will appear here -->
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="manualSelectedPatient" class="form-label">Selected Patient</label>
+                                    <input type="text" class="form-control" id="manualSelectedPatient" readonly>
+                                    <input type="hidden" id="manualPatientId">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="manualProvider" class="form-label">Provider *</label>
+                                    <select class="form-select" id="manualProvider" required>
+                                        <option value="">Select Provider</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="manualAppointmentType" class="form-label">Appointment Type</label>
+                                    <select class="form-select" id="manualAppointmentType">
+                                        <option value="">General Visit</option>
+                                        <option value="consultation">Consultation</option>
+                                        <option value="followup">Follow-up</option>
+                                        <option value="urgent">Urgent Care</option>
+                                        <option value="procedure">Procedure</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="manualDate" class="form-label">Date *</label>
+                                    <input type="date" class="form-control" id="manualDate" required>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="manualStartTime" class="form-label">Start Time *</label>
+                                    <input type="time" class="form-control" id="manualStartTime" required>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="manualEndTime" class="form-label">End Time *</label>
+                                    <input type="time" class="form-control" id="manualEndTime" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="manualNotes" class="form-label">Notes</label>
+                            <textarea class="form-control" id="manualNotes" rows="3" placeholder="Additional notes for this appointment"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="manualStaffMemberId" class="form-label">Staff Member ID *</label>
+                            <input type="text" class="form-control" id="manualStaffMemberId" required placeholder="Your staff identifier">
+                        </div>
+                        <div id="manualValidationWarnings" class="alert alert-warning" style="display: none;">
+                            <h6>Scheduling Conflicts Detected:</h6>
+                            <ul id="manualWarningsList"></ul>
+                            <div class="form-check mt-2">
+                                <input class="form-check-input" type="checkbox" id="overrideConflicts">
+                                <label class="form-check-label" for="overrideConflicts">
+                                    Override conflicts (requires justification)
+                                </label>
+                            </div>
+                            <div id="overrideJustificationDiv" style="display: none;">
+                                <textarea class="form-control mt-2" id="overrideJustification" rows="2" placeholder="Clinical justification for override"></textarea>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-success" id="createManualAppointment">
+                        <i class="fas fa-plus-circle"></i> Create Appointment
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bulk Operations Modal -->
+    <div class="modal fade" id="bulkOperationsModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-info text-white">
+                    <h5 class="modal-title">
+                        <i class="fas fa-tasks"></i> Bulk Appointment Operations
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="bulkOperation" class="form-label">Operation *</label>
+                        <select class="form-select" id="bulkOperation" required>
+                            <option value="">Select operation</option>
+                            <option value="reschedule">Reschedule Appointments</option>
+                            <option value="cancel">Cancel Appointments</option>
+                            <option value="change_provider">Change Provider</option>
+                            <option value="update_status">Update Status</option>
+                        </select>
+                    </div>
+
+                    <!-- Reschedule Options -->
+                    <div id="bulkRescheduleOptions" style="display: none;">
+                        <h6>Reschedule Options</h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="bulkNewDate" class="form-label">New Date</label>
+                                    <input type="date" class="form-control" id="bulkNewDate">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="bulkTimeOffset" class="form-label">Time Adjustment</label>
+                                    <select class="form-select" id="bulkTimeOffset">
+                                        <option value="0">No time change</option>
+                                        <option value="+30">+30 minutes</option>
+                                        <option value="+60">+1 hour</option>
+                                        <option value="+120">+2 hours</option>
+                                        <option value="-30">-30 minutes</option>
+                                        <option value="-60">-1 hour</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Cancel Options -->
+                    <div id="bulkCancelOptions" style="display: none;">
+                        <h6>Cancellation Options</h6>
+                        <div class="mb-3">
+                            <label for="bulkCancelReason" class="form-label">Cancellation Reason</label>
+                            <select class="form-select" id="bulkCancelReason">
+                                <option value="provider_unavailable">Provider Unavailable</option>
+                                <option value="emergency">Emergency</option>
+                                <option value="facility_closure">Facility Closure</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="bulkNotifyPatients">
+                            <label class="form-check-label" for="bulkNotifyPatients">
+                                Send notifications to affected patients
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Provider Change Options -->
+                    <div id="bulkProviderOptions" style="display: none;">
+                        <h6>Provider Change</h6>
+                        <div class="mb-3">
+                            <label for="bulkNewProvider" class="form-label">New Provider</label>
+                            <select class="form-select" id="bulkNewProvider">
+                                <option value="">Select new provider</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Status Update Options -->
+                    <div id="bulkStatusOptions" style="display: none;">
+                        <h6>Status Update</h6>
+                        <div class="mb-3">
+                            <label for="bulkNewStatus" class="form-label">New Status</label>
+                            <select class="form-select" id="bulkNewStatus">
+                                <option value="booked">Booked</option>
+                                <option value="confirmed">Confirmed</option>
+                                <option value="arrived">Arrived</option>
+                                <option value="in-progress">In Progress</option>
+                                <option value="completed">Completed</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="bulkStaffMemberId" class="form-label">Staff Member ID *</label>
+                        <input type="text" class="form-control" id="bulkStaffMemberId" required placeholder="Your staff identifier">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="bulkNotes" class="form-label">Operation Notes</label>
+                        <textarea class="form-control" id="bulkNotes" rows="2" placeholder="Notes about this bulk operation"></textarea>
+                    </div>
+
+                    <div class="alert alert-info">
+                        <h6>Selected Appointments:</h6>
+                        <div id="bulkSelectedAppointments">
+                            No appointments selected
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-info" id="executeBulkOperation">
+                        <i class="fas fa-tasks"></i> Execute Operation
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Patient Contact Info Modal -->
+    <div class="modal fade" id="patientContactModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-address-book"></i> Patient Contact Information
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="patientContactDetails">
+                        <!-- Patient contact details will be populated here -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="callPatient">
+                        <i class="fas fa-phone"></i> Call Patient
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </body>
 </html>

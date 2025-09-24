@@ -16,6 +16,9 @@ python-multipart = "^0.0.6"
 redis = "^6.4.0"
 aioredis = "^2.0.1"
 slowapi = "^0.1.9"
+twilio = "^9.8.1"
+openai = "^1.108.1"
+pydantic-settings = "^2.10.1"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4.0"

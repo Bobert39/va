@@ -1,0 +1,281 @@
+/* Health Monitoring Specific Styles */
+
+/* Status Indicators */
+.status-indicator {
+    position: relative;
+    display: inline-block;
+}
+
+.status-indicator .fa-circle {
+    font-size: 0.75rem;
+    animation: none;
+}
+
+.status-indicator .fa-circle.text-success {
+    color: #28a745 !important;
+    animation: pulse-success 2s infinite;
+}
+
+.status-indicator .fa-circle.text-warning {
+    color: #ffc107 !important;
+    animation: pulse-warning 2s infinite;
+}
+
+.status-indicator .fa-circle.text-danger {
+    color: #dc3545 !important;
+    animation: pulse-danger 1s infinite;
+}
+
+.status-indicator .fa-circle.text-secondary {
+    color: #6c757d !important;
+}
+
+/* Pulse animations for status indicators */
+@keyframes pulse-success {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+@keyframes pulse-warning {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+}
+
+@keyframes pulse-danger {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+}
+
+/* Status card color coding */
+.border-start.border-success {
+    border-left-color: #28a745 !important;
+    border-left-width: 4px !important;
+}
+
+.border-start.border-warning {
+    border-left-color: #ffc107 !important;
+    border-left-width: 4px !important;
+}
+
+.border-start.border-danger {
+    border-left-color: #dc3545 !important;
+    border-left-width: 4px !important;
+}
+
+.border-start.border-secondary {
+    border-left-color: #6c757d !important;
+    border-left-width: 4px !important;
+}
+
+/* Health metrics cards */
+.card.bg-light {
+    background-color: #f8f9fa !important;
+    border: 1px solid #e9ecef;
+}
+
+/* Alert styling */
+.health-alert {
+    border-left: 4px solid;
+    border-radius: 0.375rem;
+    padding: 0.75rem 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.health-alert.alert-critical {
+    border-left-color: #dc3545;
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.health-alert.alert-high {
+    border-left-color: #fd7e14;
+    background-color: #ffeaa7;
+    color: #8a4200;
+}
+
+.health-alert.alert-medium {
+    border-left-color: #ffc107;
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.health-alert.alert-low {
+    border-left-color: #17a2b8;
+    background-color: #d1ecf1;
+    color: #0c5460;
+}
+
+/* Error log styling */
+.error-log-entry {
+    border-left: 3px solid;
+    padding: 0.5rem 0.75rem;
+    margin-bottom: 0.5rem;
+    background-color: #f8f9fa;
+    border-radius: 0.25rem;
+    font-family: 'Courier New', monospace;
+    font-size: 0.875rem;
+}
+
+.error-log-entry.log-error {
+    border-left-color: #dc3545;
+    background-color: #f8d7da;
+}
+
+.error-log-entry.log-warning {
+    border-left-color: #ffc107;
+    background-color: #fff3cd;
+}
+
+.error-log-entry.log-info {
+    border-left-color: #17a2b8;
+    background-color: #d1ecf1;
+}
+
+.error-log-entry .log-timestamp {
+    color: #6c757d;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.error-log-entry .log-component {
+    color: #495057;
+    font-weight: 600;
+    font-size: 0.8rem;
+}
+
+.error-log-entry .log-message {
+    color: #212529;
+    margin-top: 0.25rem;
+    line-height: 1.4;
+}
+
+/* Connection test button states */
+.btn-test-loading {
+    position: relative;
+    color: transparent !important;
+}
+
+.btn-test-loading::after {
+    content: "";
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    top: 50%;
+    left: 50%;
+    margin-left: -8px;
+    margin-top: -8px;
+    border: 2px solid transparent;
+    border-top-color: #ffffff;
+    border-radius: 50%;
+    animation: button-loading-spinner 1s ease infinite;
+}
+
+@keyframes button-loading-spinner {
+    from {
+        transform: rotate(0turn);
+    }
+    to {
+        transform: rotate(1turn);
+    }
+}
+
+/* Performance metric value styling */
+.metric-value-excellent {
+    color: #28a745 !important;
+}
+
+.metric-value-good {
+    color: #20c997 !important;
+}
+
+.metric-value-warning {
+    color: #ffc107 !important;
+}
+
+.metric-value-poor {
+    color: #fd7e14 !important;
+}
+
+.metric-value-critical {
+    color: #dc3545 !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .status-indicator {
+        font-size: 0.875rem;
+    }
+
+    .card-body .h6 {
+        font-size: 0.875rem;
+    }
+
+    .error-log-entry {
+        font-size: 0.75rem;
+    }
+
+    .btn-sm {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+    }
+}
+
+/* Health section header styling */
+.card-header.bg-info {
+    background-color: #17a2b8 !important;
+}
+
+/* Real-time indicator */
+#realtimeIndicator .fa-circle {
+    animation: pulse-success 2s infinite;
+}
+
+/* Health refresh button animation */
+.btn-refresh-spinning .fa-sync-alt {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* Modal styling enhancements */
+.modal-dialog-centered {
+    min-height: calc(100vh - 1rem);
+}
+
+.modal-content {
+    border: none;
+    border-radius: 0.5rem;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.modal-header {
+    border-bottom: 1px solid #e9ecef;
+    border-radius: 0.5rem 0.5rem 0 0;
+}
+
+.modal-footer {
+    border-top: 1px solid #e9ecef;
+    border-radius: 0 0 0.5rem 0.5rem;
+}
+
+/* Support info table styling */
+.table-sm td {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+}
+
+/* Health metrics card hover effects */
+.card.bg-light:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease-in-out;
+}
+
+/* Status cards with hover effects */
+.card.border-start:hover {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease-in-out;
+}

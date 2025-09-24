@@ -10,8 +10,10 @@ import base64
 import json
 import logging
 import os
+import time
+from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives import hashes
@@ -153,6 +155,131 @@ class ConfigurationManager:
                 "enable_audit_logging": True,
                 "audit_log_rotation_mb": 10,
             },
+            "providers": [
+                {
+                    "id": "provider_001",
+                    "name": "Dr. Sample Provider",
+                    "email": "provider@example.com",
+                    "phone": "(555) 123-4567",
+                    "specialty": "Family Medicine",
+                    "active": True,
+                    "schedule": {
+                        "monday": {"start": "09:00", "end": "17:00", "available": True},
+                        "tuesday": {
+                            "start": "09:00",
+                            "end": "17:00",
+                            "available": True,
+                        },
+                        "wednesday": {
+                            "start": "09:00",
+                            "end": "17:00",
+                            "available": True,
+                        },
+                        "thursday": {
+                            "start": "09:00",
+                            "end": "17:00",
+                            "available": True,
+                        },
+                        "friday": {"start": "09:00", "end": "17:00", "available": True},
+                        "saturday": {"available": False},
+                        "sunday": {"available": False},
+                    },
+                    "preferences": {
+                        "appointment_duration_minutes": 30,
+                        "buffer_time_minutes": 15,
+                        "max_appointments_per_day": 20,
+                        "appointment_types": [
+                            "consultation",
+                            "follow_up",
+                            "new_patient",
+                        ],
+                    },
+                }
+            ],
+            "appointment_types": [
+                {
+                    "id": "consultation",
+                    "name": "Consultation",
+                    "duration_minutes": 30,
+                    "description": "General consultation appointment",
+                    "active": True,
+                    "scheduling_rules": {
+                        "advance_booking_days": 30,
+                        "min_notice_hours": 24,
+                        "allow_online_booking": True,
+                    },
+                },
+                {
+                    "id": "follow_up",
+                    "name": "Follow-up",
+                    "duration_minutes": 20,
+                    "description": "Follow-up appointment for existing patients",
+                    "active": True,
+                    "scheduling_rules": {
+                        "advance_booking_days": 14,
+                        "min_notice_hours": 4,
+                        "allow_online_booking": True,
+                    },
+                },
+                {
+                    "id": "new_patient",
+                    "name": "New Patient",
+                    "duration_minutes": 45,
+                    "description": "Initial appointment for new patients",
+                    "active": True,
+                    "scheduling_rules": {
+                        "advance_booking_days": 60,
+                        "min_notice_hours": 48,
+                        "allow_online_booking": False,
+                    },
+                },
+            ],
+            "practice_information": {
+                "full_name": "Voice AI Practice - Complete Medical Care",
+                "address": {
+                    "street": "123 Medical Center Drive",
+                    "city": "Healthcare City",
+                    "state": "HC",
+                    "zip_code": "12345",
+                    "country": "USA",
+                },
+                "phone": "(555) 123-4567",
+                "fax": "(555) 123-4568",
+                "email": "contact@voiceaipractice.com",
+                "website": "https://www.voiceaipractice.com",
+                "departments": [
+                    {
+                        "name": "Primary Care",
+                        "phone": "(555) 123-4567",
+                        "location": "Main Building, Floor 1",
+                    }
+                ],
+                "greeting_customization": {
+                    "phone_greeting": "Thank you for calling Voice AI Practice. How may we help you today?",
+                    "appointment_confirmation": "Hello, this is Voice AI Practice calling to confirm your appointment.",
+                    "after_hours_message": "Thank you for calling Voice AI Practice. Our office is currently closed. Please call back during business hours or visit our website for more information.",
+                },
+            },
+            "tts_configuration": {
+                "provider": "openai",
+                "voice_model": "alloy",
+                "speaking_rate": 1.0,
+                "practice_pronunciation": {
+                    "practice_name": "",
+                    "common_procedures": {
+                        "checkup": "CHECK up",
+                        "consultation": "con-sul-TAY-shun",
+                        "follow up": "FOLLOW up",
+                        "appointment": "a-POINT-ment",
+                    },
+                },
+                "communication_style": {
+                    "tone": "professional_friendly",
+                    "greeting_template": "Hello, this is {practice_name}. I'm calling to confirm your upcoming appointment.",
+                    "confirmation_template": "I have scheduled your {appointment_type} on {date} at {time} with {provider_name} at our {location} location. Please say 'yes' to confirm or 'no' if you need to make changes.",
+                    "closing_template": "Thank you for choosing {practice_name}. We look forward to seeing you. Have a great day!",
+                },
+            },
         }
 
     def validate_config(self, config: Dict[str, Any]) -> bool:
@@ -176,6 +303,10 @@ class ConfigurationManager:
             "api_keys",
             "operational_hours",
             "system_settings",
+            "providers",
+            "appointment_types",
+            "practice_information",
+            "tts_configuration",
         ]
 
         for section in required_sections:
@@ -229,6 +360,59 @@ class ConfigurationManager:
         # Validate operational hours
         if not isinstance(config["operational_hours"], dict):
             raise ValueError("operational_hours must be a dictionary")
+
+        # Validate TTS configuration structure
+        tts_config_required = [
+            "provider",
+            "voice_model",
+            "speaking_rate",
+            "practice_pronunciation",
+            "communication_style",
+        ]
+        for field in tts_config_required:
+            if field not in config["tts_configuration"]:
+                raise ValueError(f"Missing TTS configuration field: {field}")
+
+        # Validate TTS communication style structure
+        comm_style_required = [
+            "tone",
+            "greeting_template",
+            "confirmation_template",
+            "closing_template",
+        ]
+        for field in comm_style_required:
+            if field not in config["tts_configuration"]["communication_style"]:
+                raise ValueError(f"Missing TTS communication style field: {field}")
+
+        # Validate providers structure
+        if not isinstance(config["providers"], list):
+            raise ValueError("providers must be a list")
+
+        for i, provider in enumerate(config["providers"]):
+            provider_required = ["id", "name", "active", "schedule", "preferences"]
+            for field in provider_required:
+                if field not in provider:
+                    raise ValueError(
+                        f"Missing provider field '{field}' in provider {i}"
+                    )
+
+        # Validate appointment types structure
+        if not isinstance(config["appointment_types"], list):
+            raise ValueError("appointment_types must be a list")
+
+        for i, apt_type in enumerate(config["appointment_types"]):
+            apt_type_required = ["id", "name", "duration_minutes", "active"]
+            for field in apt_type_required:
+                if field not in apt_type:
+                    raise ValueError(
+                        f"Missing appointment type field '{field}' in appointment type {i}"
+                    )
+
+        # Validate practice information structure
+        practice_info_required = ["full_name", "address", "phone"]
+        for field in practice_info_required:
+            if field not in config["practice_information"]:
+                raise ValueError(f"Missing practice information field: {field}")
 
         return True
 
@@ -345,6 +529,413 @@ class ConfigurationManager:
 
         # Save the updated configuration
         self.save_config(self._config)
+
+    def update_configuration_realtime(
+        self, config_updates: Dict[str, Any], validate_first: bool = True
+    ) -> Dict[str, Any]:
+        """
+        Update configuration with real-time changes and event notification.
+
+        Args:
+            config_updates: Dictionary of configuration updates
+            validate_first: Whether to validate before applying changes
+
+        Returns:
+            Dictionary with update status and any errors
+        """
+        result = {
+            "success": False,
+            "message": "",
+            "backup_created": False,
+            "rollback_available": False,
+            "errors": [],
+        }
+
+        try:
+            # Load current configuration
+            current_config = self.load_config()
+
+            # Create backup before changes
+            backup_config = self._create_configuration_backup(current_config)
+            result["backup_created"] = True
+            result["rollback_available"] = True
+
+            # Create updated configuration by merging changes
+            updated_config = self._merge_configuration_updates(
+                current_config, config_updates
+            )
+
+            # Validate if requested
+            if validate_first:
+                validation_result = self._validate_configuration_changes(
+                    updated_config, current_config
+                )
+                if not validation_result["valid"]:
+                    result["errors"] = validation_result["errors"]
+                    result["message"] = "Configuration validation failed"
+                    return result
+
+            # Apply changes with atomic operation
+            self._apply_configuration_changes(updated_config)
+
+            # Trigger configuration change events
+            self._trigger_configuration_events(
+                config_updates, current_config, updated_config
+            )
+
+            # Log the changes for audit
+            self._log_configuration_changes(config_updates, backup_config["backup_id"])
+
+            result["success"] = True
+            result["message"] = "Configuration updated successfully"
+            result["backup_id"] = backup_config["backup_id"]
+
+        except Exception as e:
+            logger.error(f"Configuration update failed: {e}")
+            result["errors"].append(str(e))
+            result["message"] = f"Configuration update failed: {str(e)}"
+
+            # Attempt rollback if backup exists
+            if result["backup_created"]:
+                try:
+                    self._rollback_configuration(backup_config["backup_id"])
+                    result["message"] += " (automatically rolled back)"
+                except Exception as rollback_error:
+                    logger.error(f"Rollback failed: {rollback_error}")
+                    result["message"] += f" (rollback failed: {rollback_error})"
+
+        return result
+
+    def _create_configuration_backup(self, config: Dict[str, Any]) -> Dict[str, Any]:
+        """Create a backup of current configuration."""
+        import random
+        import time
+
+        # Use time, process ID, and random number to ensure uniqueness
+        timestamp = int(time.time())
+        random_suffix = random.randint(100000, 999999)
+        backup_id = f"backup_{timestamp}_{random_suffix}"
+        backup_path = Path(f"{self.config_path}.{backup_id}")
+
+        # Save backup
+        with open(backup_path, "w") as f:
+            json.dump(config, f, indent=2)
+
+        logger.info(f"Configuration backup created: {backup_path}")
+
+        return {
+            "backup_id": backup_id,
+            "backup_path": str(backup_path),
+            "timestamp": timestamp,
+            "config": config.copy(),
+        }
+
+    def _merge_configuration_updates(
+        self, current_config: Dict[str, Any], updates: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Merge configuration updates into current configuration."""
+        import copy
+
+        updated_config = copy.deepcopy(current_config)
+
+        def deep_update(base_dict, update_dict):
+            for key, value in update_dict.items():
+                if (
+                    key in base_dict
+                    and isinstance(base_dict[key], dict)
+                    and isinstance(value, dict)
+                ):
+                    deep_update(base_dict[key], value)
+                else:
+                    base_dict[key] = value
+
+        deep_update(updated_config, updates)
+        return updated_config
+
+    def _validate_configuration_changes(
+        self, new_config: Dict[str, Any], current_config: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Validate configuration changes before applying."""
+        result = {"valid": True, "errors": [], "warnings": []}
+
+        try:
+            # Use existing validation method
+            self.validate_config(new_config)
+
+            # Additional real-time validation checks
+            self._validate_provider_schedules(new_config.get("providers", []))
+            self._validate_business_hours(new_config.get("operational_hours", {}))
+            self._validate_appointment_types(new_config.get("appointment_types", []))
+
+        except ValueError as e:
+            result["valid"] = False
+            result["errors"].append(str(e))
+        except Exception as e:
+            result["valid"] = False
+            result["errors"].append(f"Validation error: {str(e)}")
+
+        return result
+
+    def _validate_provider_schedules(self, providers: List[Dict[str, Any]]):
+        """Validate provider schedule configurations."""
+        for provider in providers:
+            if not provider.get("name", "").strip():
+                raise ValueError(f"Provider name is required")
+
+            # Validate provider ID uniqueness
+            provider_ids = [p.get("id") for p in providers if p.get("id")]
+            if len(provider_ids) != len(set(provider_ids)):
+                raise ValueError("Provider IDs must be unique")
+
+    def _validate_business_hours(self, hours: Dict[str, Any]):
+        """Validate business hours configuration."""
+        if not hours:
+            return
+
+        days = [
+            "monday",
+            "tuesday",
+            "wednesday",
+            "thursday",
+            "friday",
+            "saturday",
+            "sunday",
+        ]
+        for day in days:
+            if day in hours and hours[day].get("isOpen"):
+                start_time = hours[day].get("start")
+                end_time = hours[day].get("end")
+
+                if not start_time or not end_time:
+                    raise ValueError(f"Start and end times required for {day}")
+
+                # Validate time format and logic
+                from datetime import datetime
+
+                try:
+                    start = datetime.strptime(start_time, "%H:%M")
+                    end = datetime.strptime(end_time, "%H:%M")
+                    if start >= end:
+                        raise ValueError(f"End time must be after start time for {day}")
+                except ValueError as e:
+                    # Re-raise specific error messages, or provide generic for parsing errors
+                    error_msg = str(e)
+                    if "End time must be after start time" in error_msg:
+                        raise e
+                    else:
+                        raise ValueError(f"Invalid time format for {day}")
+
+    def _validate_appointment_types(self, appointment_types: List[Dict[str, Any]]):
+        """Validate appointment type configurations."""
+        for apt_type in appointment_types:
+            if not apt_type.get("name", "").strip():
+                raise ValueError("Appointment type name is required")
+
+            duration = apt_type.get("duration_minutes", 0)
+            if not isinstance(duration, int) or duration < 5 or duration > 480:
+                raise ValueError(
+                    f"Invalid duration for appointment type '{apt_type.get('name')}': must be between 5-480 minutes"
+                )
+
+        # Validate unique IDs
+        type_ids = [t.get("id") for t in appointment_types if t.get("id")]
+        if len(type_ids) != len(set(type_ids)):
+            raise ValueError("Appointment type IDs must be unique")
+
+    def _apply_configuration_changes(self, new_config: Dict[str, Any]):
+        """Apply configuration changes atomically."""
+        # Save the new configuration
+        self.save_config(new_config)
+
+        # Update in-memory configuration
+        self._config = new_config
+
+        logger.info("Configuration changes applied successfully")
+
+    def _apply_configuration_rollback(self, rollback_config: Dict[str, Any]):
+        """Apply configuration rollback without validation (for error recovery)."""
+        # Save the rollback configuration directly
+        with open(self.config_path, "w") as f:
+            encrypted_content = self._encrypt_data(rollback_config)
+            f.write(encrypted_content)
+
+        # Update in-memory configuration
+        self._config = rollback_config
+
+        logger.info("Configuration rollback applied successfully")
+
+    def _trigger_configuration_events(
+        self,
+        updates: Dict[str, Any],
+        old_config: Dict[str, Any],
+        new_config: Dict[str, Any],
+    ):
+        """Trigger events for configuration changes."""
+        # This is where you would integrate with an event system
+        # For now, we'll log the events
+
+        events = []
+
+        # Check for specific changes and create events
+        if "providers" in updates:
+            events.append(
+                {
+                    "type": "providers_updated",
+                    "timestamp": time.time(),
+                    "old_count": len(old_config.get("providers", [])),
+                    "new_count": len(new_config.get("providers", [])),
+                }
+            )
+
+        if "operational_hours" in updates:
+            events.append(
+                {
+                    "type": "business_hours_updated",
+                    "timestamp": time.time(),
+                    "changes": updates["operational_hours"],
+                }
+            )
+
+        if "appointment_types" in updates:
+            events.append(
+                {
+                    "type": "appointment_types_updated",
+                    "timestamp": time.time(),
+                    "old_count": len(old_config.get("appointment_types", [])),
+                    "new_count": len(new_config.get("appointment_types", [])),
+                }
+            )
+
+        if "practice_information" in updates:
+            events.append(
+                {
+                    "type": "practice_info_updated",
+                    "timestamp": time.time(),
+                    "practice_name": new_config.get("practice_information", {}).get(
+                        "full_name"
+                    ),
+                }
+            )
+
+        # Log events
+        for event in events:
+            logger.info(f"Configuration event: {event}")
+
+        # Here you would typically publish events to subscribers
+        # For example: event_bus.publish(event)
+
+    def _log_configuration_changes(self, updates: Dict[str, Any], backup_id: str):
+        """Log configuration changes for audit purposes."""
+        from src.audit import log_audit_event
+
+        try:
+            # Create a summary of changes
+            change_summary = []
+            for section, changes in updates.items():
+                if isinstance(changes, dict):
+                    change_summary.append(f"{section}: {len(changes)} items updated")
+                elif isinstance(changes, list):
+                    change_summary.append(f"{section}: {len(changes)} items")
+                else:
+                    change_summary.append(f"{section}: updated")
+
+            log_audit_event(
+                event_type="configuration_update",
+                action="Configuration updated via real-time API",
+                user_id="system",
+                additional_data={
+                    "changes": change_summary,
+                    "backup_id": backup_id,
+                    "sections_updated": list(updates.keys()),
+                },
+            )
+        except Exception as e:
+            logger.warning(f"Failed to log configuration changes: {e}")
+
+    def rollback_configuration(self, backup_id: str) -> Dict[str, Any]:
+        """Rollback configuration to a previous backup."""
+        result = {"success": False, "message": ""}
+
+        try:
+            backup_path = Path(f"{self.config_path}.{backup_id}")
+
+            if not backup_path.exists():
+                result["message"] = f"Backup {backup_id} not found"
+                return result
+
+            # Load backup configuration
+            with open(backup_path, "r") as f:
+                backup_config = json.load(f)
+
+            # Validate backup configuration
+            self.validate_config(backup_config)
+
+            # Create a backup of current state before rollback
+            current_backup = self._create_configuration_backup(self.load_config())
+
+            # Apply rollback
+            self._apply_configuration_changes(backup_config)
+
+            # Log rollback action
+            from src.audit import log_audit_event
+
+            log_audit_event(
+                event_type="configuration_rollback",
+                action="Configuration rolled back to previous backup",
+                user_id="system",
+                additional_data={
+                    "rollback_to": backup_id,
+                    "current_backup": current_backup["backup_id"],
+                },
+            )
+
+            result["success"] = True
+            result["message"] = f"Configuration rolled back to {backup_id}"
+            result["current_backup"] = current_backup["backup_id"]
+
+        except Exception as e:
+            logger.error(f"Configuration rollback failed: {e}")
+            result["message"] = f"Rollback failed: {str(e)}"
+
+        return result
+
+    def _rollback_configuration(self, backup_id: str):
+        """Internal rollback method used by update_configuration_realtime."""
+        backup_path = Path(f"{self.config_path}.{backup_id}")
+
+        if backup_path.exists():
+            with open(backup_path, "r") as f:
+                backup_config = json.load(f)
+            self._apply_configuration_rollback(backup_config)
+            logger.info(f"Configuration automatically rolled back to {backup_id}")
+        else:
+            raise Exception(f"Backup {backup_id} not found for rollback")
+
+    def get_configuration_backups(self) -> List[Dict[str, Any]]:
+        """Get list of available configuration backups."""
+        backups = []
+        config_dir = self.config_path.parent
+
+        for backup_file in config_dir.glob(f"{self.config_path.name}.backup_*"):
+            try:
+                backup_id = backup_file.name.split(".")[-1]
+                timestamp = int(backup_id.split("_")[1])
+
+                backups.append(
+                    {
+                        "backup_id": backup_id,
+                        "timestamp": timestamp,
+                        "file_path": str(backup_file),
+                        "size": backup_file.stat().st_size,
+                        "created": datetime.fromtimestamp(timestamp).isoformat(),
+                    }
+                )
+            except (ValueError, IndexError):
+                continue
+
+        # Sort by timestamp (newest first)
+        backups.sort(key=lambda x: x["timestamp"], reverse=True)
+        return backups
 
 
 # Global configuration manager instance

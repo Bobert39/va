@@ -1,0 +1,48 @@
+{
+  "call_metrics": {
+    "total_calls": 32,
+    "successful_calls": 36,
+    "failed_calls": 0,
+    "average_call_duration": 1.4562499999999998,
+    "total_call_minutes": 46.599999999999994
+  },
+  "api_usage": {
+    "openai_requests": 0,
+    "openai_audio_minutes": 0,
+    "openai_cost_dollars": 0.0,
+    "twilio_calls": 0,
+    "twilio_minutes": 0.0,
+    "twilio_cost_dollars": 0.0
+  },
+  "error_tracking": {
+    "transcription_errors": 0,
+    "timeout_events": 0,
+    "system_errors": 16,
+    "last_error_time": "2025-09-23T00:28:04.960535+00:00"
+  },
+  "monthly_summary": {
+    "current_month": "2025-09",
+    "total_cost_dollars": 0.0,
+    "budget_used_percent": 0.0,
+    "calls_this_month": 32,
+    "alerts_sent": 0
+  },
+  "performance": {
+    "average_transcription_time": 0.0,
+    "average_response_time": 0.0,
+    "system_uptime_percent": 99.0
+  },
+  "last_updated": "2025-09-23T00:28:05.066701+00:00",
+  "dashboard_metrics": {
+    "total_views": 4,
+    "appointments_displayed": 20,
+    "last_viewed": "2025-09-23T00:28:04.951617+00:00"
+  },
+  "ai_appointments": {
+    "total_scheduled": 4,
+    "confirmed": 4,
+    "pending": 0,
+    "failed": 0,
+    "average_confidence": 0.85
+  }
+}

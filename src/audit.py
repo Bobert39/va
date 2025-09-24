@@ -226,11 +226,12 @@ class AuditLogger:
         phone_hash: str,
         result: str = "SUCCESS",
         duration: Optional[int] = None,
+        additional_data: Optional[Dict[str, Any]] = None,
     ):
-        """Log voice call events (for future voice integration)."""
-        additional_data = {}
+        """Log voice call events with HIPAA-compliant data handling."""
+        data = additional_data or {}
         if duration is not None:
-            additional_data["duration_seconds"] = duration
+            data["duration_seconds"] = duration
 
         self.log_event(
             event_type="VOICE_CALL",
@@ -238,7 +239,209 @@ class AuditLogger:
             session_id=call_id,
             user_id=phone_hash,  # Phone number hash as user identifier
             result=result,
+            additional_data=data,
+        )
+
+    def log_transcription_event(
+        self,
+        call_id: str,
+        phone_hash: str,
+        transcription_length: int,
+        confidence: Optional[float] = None,
+        result: str = "SUCCESS",
+        error_details: Optional[str] = None,
+    ):
+        """Log speech-to-text transcription events with quality metrics."""
+        additional_data = {
+            "transcription_length": transcription_length,
+            "confidence_score": confidence,
+        }
+        if error_details:
+            additional_data["error_details"] = error_details
+
+        self.log_event(
+            event_type="VOICE_TRANSCRIPTION",
+            action="AUDIO_TRANSCRIBED",
+            session_id=call_id,
+            user_id=phone_hash,
+            result=result,
             additional_data=additional_data,
+        )
+
+    def log_api_usage_event(
+        self,
+        service: str,
+        operation: str,
+        cost_cents: int,
+        usage_amount: float,
+        usage_unit: str,
+        result: str = "SUCCESS",
+        session_id: Optional[str] = None,
+    ):
+        """Log API usage for cost tracking and monitoring."""
+        additional_data = {
+            "service": service,
+            "operation": operation,
+            "cost_cents": cost_cents,
+            "usage_amount": usage_amount,
+            "usage_unit": usage_unit,
+        }
+
+        self.log_event(
+            event_type="API_USAGE",
+            action=f"{service.upper()}_{operation.upper()}",
+            session_id=session_id,
+            user_id="SYSTEM",
+            result=result,
+            additional_data=additional_data,
+        )
+
+    def log_appointment_event(
+        self,
+        event_type: str,
+        session_id: Optional[str] = None,
+        details: Optional[Dict[str, Any]] = None,
+        result: str = "SUCCESS",
+    ):
+        """
+        Log appointment-related events with HIPAA compliance.
+
+        Args:
+            event_type: Type of appointment event
+            session_id: Voice call session ID
+            details: Event details (PHI will be anonymized)
+            result: Result of the operation
+        """
+        # Anonymize any PHI in details
+        safe_details = {}
+        if details:
+            for key, value in details.items():
+                if key in ["patient_id", "provider_id", "appointment_id"]:
+                    # Hash sensitive IDs
+                    safe_details[f"{key}_hash"] = self._hash_sensitive_data(str(value))
+                elif key in ["error", "message", "status", "attempt", "retry_count"]:
+                    # Keep non-sensitive data
+                    safe_details[key] = value
+                elif key == "start_time":
+                    # Keep appointment time (not PHI by itself)
+                    safe_details["appointment_time"] = value
+                else:
+                    # Include other non-sensitive data
+                    if not any(
+                        sensitive in str(key).lower()
+                        for sensitive in ["name", "dob", "ssn", "mrn"]
+                    ):
+                        safe_details[key] = value
+
+        self.log_event(
+            event_type="APPOINTMENT",
+            action=event_type,
+            session_id=session_id,
+            user_id="VOICE_SYSTEM",
+            result=result,
+            additional_data=safe_details,
+        )
+
+    def log_appointment_creation(
+        self,
+        appointment_id: str,
+        patient_id: str,
+        provider_id: str,
+        appointment_time: str,
+        session_id: Optional[str] = None,
+        confirmation_number: Optional[str] = None,
+        result: str = "SUCCESS",
+    ):
+        """Log successful appointment creation."""
+        details = {
+            "appointment_id": appointment_id,
+            "patient_id": patient_id,
+            "provider_id": provider_id,
+            "start_time": appointment_time,
+        }
+
+        if confirmation_number:
+            details["confirmation"] = (
+                confirmation_number[:10] + "..."
+            )  # Partial confirmation for audit
+
+        self.log_appointment_event(
+            event_type="appointment_created",
+            session_id=session_id,
+            details=details,
+            result=result,
+        )
+
+    def log_appointment_retry(
+        self,
+        patient_id: str,
+        provider_id: str,
+        attempt: int,
+        error: str,
+        session_id: Optional[str] = None,
+    ):
+        """Log appointment creation retry attempt."""
+        self.log_appointment_event(
+            event_type="appointment_creation_retry",
+            session_id=session_id,
+            details={
+                "patient_id": patient_id,
+                "provider_id": provider_id,
+                "attempt": attempt,
+                "error": error,
+            },
+            result="RETRY",
+        )
+
+    def log_appointment_failure(
+        self,
+        patient_id: str,
+        provider_id: str,
+        error: str,
+        retry_count: int,
+        session_id: Optional[str] = None,
+    ):
+        """Log appointment creation failure."""
+        self.log_appointment_event(
+            event_type="appointment_creation_failed",
+            session_id=session_id,
+            details={
+                "patient_id": patient_id,
+                "provider_id": provider_id,
+                "error": error,
+                "retry_count": retry_count,
+            },
+            result="FAILURE",
+        )
+
+    def log_dashboard_access(self, user_id: str, action: str):
+        """
+        Log dashboard access event.
+
+        Args:
+            user_id: User accessing dashboard
+            action: Type of dashboard access
+        """
+        self.log_event(
+            event_type="dashboard_access",
+            action=action,
+            user_id=user_id,
+            timestamp=datetime.now(timezone.utc).isoformat(),
+        )
+
+    def log_data_export(self, user_id: str, export_type: str):
+        """
+        Log data export event.
+
+        Args:
+            user_id: User exporting data
+            export_type: Type of export (csv, pdf, etc.)
+        """
+        self.log_event(
+            event_type="data_export",
+            action=f"Exported {export_type}",
+            user_id=user_id,
+            timestamp=datetime.now(timezone.utc).isoformat(),
         )
 
     def test_logging(self) -> bool:
@@ -258,6 +461,89 @@ class AuditLogger:
 
 # Global audit logger instance
 audit_logger_instance = AuditLogger()
+
+
+class SecurityAndAuditService:
+    """
+    Security and Audit Service wrapper for consistent interface.
+
+    Provides a unified interface for audit logging with HIPAA compliance.
+    """
+
+    def __init__(self):
+        """Initialize with global audit logger instance."""
+        self.audit_logger = audit_logger_instance
+
+    def log_event(self, event_type: str, action: str, **kwargs):
+        """Log an audit event."""
+        return self.audit_logger.log_event(event_type, action, **kwargs)
+
+    def log_appointment_event(
+        self,
+        event_type: str,
+        session_id: Optional[str] = None,
+        details: Optional[Dict[str, Any]] = None,
+        result: str = "SUCCESS",
+    ):
+        """Log appointment-related events."""
+        return self.audit_logger.log_appointment_event(
+            event_type, session_id, details, result
+        )
+
+    def log_appointment_creation(
+        self,
+        appointment_id: str,
+        patient_id: str,
+        provider_id: str,
+        appointment_time: str,
+        session_id: Optional[str] = None,
+        confirmation_number: Optional[str] = None,
+        result: str = "SUCCESS",
+    ):
+        """Log successful appointment creation."""
+        return self.audit_logger.log_appointment_creation(
+            appointment_id,
+            patient_id,
+            provider_id,
+            appointment_time,
+            session_id,
+            confirmation_number,
+            result,
+        )
+
+    def log_appointment_retry(
+        self,
+        patient_id: str,
+        provider_id: str,
+        attempt: int,
+        error: str,
+        session_id: Optional[str] = None,
+    ):
+        """Log appointment creation retry."""
+        return self.audit_logger.log_appointment_retry(
+            patient_id, provider_id, attempt, error, session_id
+        )
+
+    def log_appointment_failure(
+        self,
+        patient_id: str,
+        provider_id: str,
+        error: str,
+        retry_count: int,
+        session_id: Optional[str] = None,
+    ):
+        """Log appointment creation failure."""
+        return self.audit_logger.log_appointment_failure(
+            patient_id, provider_id, error, retry_count, session_id
+        )
+
+    def log_dashboard_access(self, user_id: str, action: str):
+        """Log dashboard access event."""
+        return self.audit_logger.log_dashboard_access(user_id, action)
+
+    def log_data_export(self, user_id: str, export_type: str):
+        """Log data export event."""
+        return self.audit_logger.log_data_export(user_id, export_type)
 
 
 def log_audit_event(event_type: str, action: str, **kwargs):

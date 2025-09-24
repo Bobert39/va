@@ -1,0 +1,208 @@
+{
+  "practice_name": "Voice AI Practice",
+  "emr_credentials": {
+    "base_url": "https://your-emr-instance.com",
+    "client_id": "",
+    "client_secret": "",
+    "redirect_uri": "http://localhost:8000/auth/callback"
+  },
+  "oauth_config": {
+    "client_id": "",
+    "client_secret": "",
+    "redirect_uri": "http://localhost:8000/oauth/callback",
+    "authorization_endpoint": "",
+    "token_endpoint": "",
+    "fhir_base_url": "",
+    "scopes": [
+      "openid",
+      "fhirUser",
+      "patient/*.read",
+      "patient/*.write",
+      "Patient.read",
+      "Encounter.read",
+      "DiagnosticReport.read",
+      "Medication.read",
+      "Appointment.read",
+      "Appointment.write"
+    ]
+  },
+  "oauth_tokens": {
+    "access_token": "",
+    "refresh_token": "",
+    "token_type": "Bearer",
+    "expires_at": "",
+    "scope": ""
+  },
+  "api_keys": {
+    "openai_api_key": "",
+    "twilio_account_sid": "",
+    "twilio_auth_token": "",
+    "azure_speech_key": "",
+    "azure_speech_region": ""
+  },
+  "operational_hours": {
+    "monday": {
+      "start": "09:00",
+      "end": "17:00"
+    },
+    "tuesday": {
+      "start": "09:00",
+      "end": "17:00"
+    },
+    "wednesday": {
+      "start": "09:00",
+      "end": "17:00"
+    },
+    "thursday": {
+      "start": "09:00",
+      "end": "17:00"
+    },
+    "friday": {
+      "start": "09:00",
+      "end": "17:00"
+    },
+    "saturday": {
+      "closed": true
+    },
+    "sunday": {
+      "closed": true
+    }
+  },
+  "system_settings": {
+    "log_level": "INFO",
+    "max_call_duration_minutes": 10,
+    "enable_audit_logging": true,
+    "audit_log_rotation_mb": 10
+  },
+  "providers": [
+    {
+      "id": "wizard-provider-001",
+      "name": "Dr. Setup Wizard",
+      "email": "wizard@testcenter.com",
+      "phone": "(555) 123-4567",
+      "specialty": "Family Medicine",
+      "active": true,
+      "schedule": {
+        "monday": {
+          "available": true,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "tuesday": {
+          "available": true,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "wednesday": {
+          "available": true,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "thursday": {
+          "available": true,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "friday": {
+          "available": true,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "saturday": {
+          "available": false
+        },
+        "sunday": {
+          "available": false
+        }
+      },
+      "preferences": {
+        "appointment_duration_minutes": 30,
+        "buffer_time_minutes": 15,
+        "max_appointments_per_day": 20,
+        "appointment_types": [
+          "consultation",
+          "follow-up",
+          "new-patient"
+        ]
+      }
+    }
+  ],
+  "appointment_types": [
+    {
+      "id": "consultation",
+      "name": "Consultation",
+      "duration_minutes": 30,
+      "description": "Standard medical consultation",
+      "active": true,
+      "scheduling_rules": {
+        "advance_booking_days": 30,
+        "same_day_booking": true,
+        "requires_preparation": false
+      }
+    },
+    {
+      "id": "follow-up",
+      "name": "Follow-up Visit",
+      "duration_minutes": 20,
+      "description": "Follow-up appointment for existing patients",
+      "active": true,
+      "scheduling_rules": {
+        "advance_booking_days": 60,
+        "same_day_booking": true,
+        "requires_preparation": false
+      }
+    },
+    {
+      "id": "new-patient",
+      "name": "New Patient Visit",
+      "duration_minutes": 45,
+      "description": "Comprehensive visit for new patients",
+      "active": true,
+      "scheduling_rules": {
+        "advance_booking_days": 21,
+        "same_day_booking": false,
+        "requires_preparation": true
+      }
+    }
+  ],
+  "practice_information": {
+    "full_name": "Test Medical Center",
+    "address": "123 Test St",
+    "phone": "555-1234",
+    "fax": "",
+    "email": "test@test.com",
+    "website": "",
+    "departments": [
+      {
+        "name": "Family Medicine",
+        "phone": "(555) 123-WIZARD",
+        "location": "Main Building"
+      }
+    ],
+    "greeting_customization": {
+      "phone_greeting": "Thank you for calling Wizard Test Medical Center",
+      "appointment_confirmation": "Your appointment has been confirmed",
+      "after_hours_message": "We are currently closed. Please call during business hours."
+    }
+  },
+  "tts_configuration": {
+    "provider": "openai",
+    "voice_model": "alloy",
+    "speaking_rate": 1.0,
+    "practice_pronunciation": {
+      "practice_name": "",
+      "common_procedures": {
+        "checkup": "CHECK up",
+        "consultation": "con-sul-TAY-shun",
+        "follow up": "FOLLOW up",
+        "appointment": "a-POINT-ment"
+      }
+    },
+    "communication_style": {
+      "tone": "professional_friendly",
+      "greeting_template": "Hello, this is {practice_name}. I'm calling to confirm your upcoming appointment.",
+      "confirmation_template": "I have scheduled your {appointment_type} on {date} at {time} with {provider_name} at our {location} location. Please say 'yes' to confirm or 'no' if you need to make changes.",
+      "closing_template": "Thank you for choosing {practice_name}. We look forward to seeing you. Have a great day!"
+    }
+  }
+}
