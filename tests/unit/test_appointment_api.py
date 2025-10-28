@@ -5,17 +5,33 @@ These tests validate the appointment web interface API endpoints
 with mocked FHIR appointment service responses.
 """
 
+import os
 from datetime import date, datetime
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 from fastapi.testclient import TestClient
 
-# Mock the main app initialization to avoid OAuth client issues
-with patch("src.main.oauth_client"), patch("src.main.fhir_patient_service"), patch(
-    "src.main.provider_schedule_service"
-), patch("src.main.appointment_service"):
-    from src.main import app
+# Set environment variables before importing main
+os.environ["ALLOW_DEV_DEFAULTS"] = "true"
+os.environ["DASHBOARD_USERNAME"] = "test_user"
+os.environ["DASHBOARD_PASSWORD"] = "test_password_123"
+
+# Import the app first
+from src.main import app
+import src.main
+
+# Now replace the services with mocks after import
+_mock_oauth_client = Mock()
+_mock_patient_service = Mock()
+_mock_provider_schedule_service = Mock()
+_mock_appointment_service = Mock()
+
+# Replace the actual service instances
+src.main.oauth_client = _mock_oauth_client
+src.main.fhir_patient_service = _mock_patient_service
+src.main.provider_schedule_service = _mock_provider_schedule_service
+src.main.appointment_service = _mock_appointment_service
 
 from src.services.appointment import (
     Appointment,
@@ -97,18 +113,20 @@ def sample_provider(sample_provider_data):
 class TestAppointmentTodayEndpoint:
     """Test GET /api/v1/appointments/today endpoint."""
 
-    @patch("src.main.appointment_service")
     def test_get_appointments_today_success(
-        self, mock_service, test_client, sample_appointment
+        self, test_client, sample_appointment
     ):
         """Test successful retrieval of today's appointments."""
         # Setup mock - needs to be AsyncMock for awaitable
-        mock_service.get_appointments_today = AsyncMock(return_value=[sample_appointment])
+        _mock_appointment_service.get_appointments_today = AsyncMock(return_value=[sample_appointment])
 
         # Make request
         response = test_client.get("/api/v1/appointments/today")
 
         # Verify response
+        if response.status_code != 200:
+            print(f"\n\nDEBUG: Response status: {response.status_code}")
+            print(f"DEBUG: Response text: {response.text}\n\n")
         assert response.status_code == 200
         data = response.json()
         assert data["status"] == "success"
@@ -122,7 +140,7 @@ class TestAppointmentTodayEndpoint:
         assert appointment["provider_name"] == "Dr. Smith"
 
         # Verify service called
-        mock_service.get_appointments_today.assert_called_once()
+        _mock_appointment_service.get_appointments_today.assert_called_once()
 
     @patch("src.main.appointment_service")
     def test_get_appointments_today_empty(self, mock_service, test_client):
