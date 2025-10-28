@@ -124,9 +124,6 @@ class TestAppointmentTodayEndpoint:
         response = test_client.get("/api/v1/appointments/today")
 
         # Verify response
-        if response.status_code != 200:
-            print(f"\n\nDEBUG: Response status: {response.status_code}")
-            print(f"DEBUG: Response text: {response.text}\n\n")
         assert response.status_code == 200
         data = response.json()
         assert data["status"] == "success"
@@ -142,11 +139,10 @@ class TestAppointmentTodayEndpoint:
         # Verify service called
         _mock_appointment_service.get_appointments_today.assert_called_once()
 
-    @patch("src.main.appointment_service")
-    def test_get_appointments_today_empty(self, mock_service, test_client):
+    def test_get_appointments_today_empty(self, test_client):
         """Test retrieval when no appointments exist."""
         # Setup mock
-        mock_service.get_appointments_today = AsyncMock(return_value= [])
+        _mock_appointment_service.get_appointments_today = AsyncMock(return_value= [])
 
         # Make request
         response = test_client.get("/api/v1/appointments/today")
@@ -158,11 +154,10 @@ class TestAppointmentTodayEndpoint:
         assert data["total"] == 0
         assert len(data["appointments"]) == 0
 
-    @patch("src.main.appointment_service")
-    def test_get_appointments_today_service_error(self, mock_service, test_client):
+    def test_get_appointments_today_service_error(self, test_client):
         """Test handling of appointment service errors."""
         # Setup mock
-        mock_service.get_appointments_today = AsyncMock(
+        _mock_appointment_service.get_appointments_today = AsyncMock(
             side_effect=FHIRAppointmentError("FHIR service unavailable")
         )
 
@@ -180,13 +175,12 @@ class TestAppointmentTodayEndpoint:
 class TestAppointmentsEndpoint:
     """Test GET /api/v1/appointments endpoint."""
 
-    @patch("src.main.appointment_service")
     def test_get_appointments_with_date_range(
-        self, mock_service, test_client, sample_appointment
+        self, test_client, sample_appointment
     ):
         """Test appointment retrieval with date range filters."""
         # Setup mock
-        mock_service.get_appointments_by_date_range = AsyncMock(return_value= [sample_appointment])
+        _mock_appointment_service.get_appointments_by_date_range = AsyncMock(return_value= [sample_appointment])
 
         # Make request
         response = test_client.get(
@@ -205,20 +199,19 @@ class TestAppointmentsEndpoint:
         assert data["total"] == 1
 
         # Verify service called with correct parameters
-        mock_service.get_appointments_by_date_range.assert_called_once_with(
+        _mock_appointment_service.get_appointments_by_date_range.assert_called_once_with(
             start_date="2025-09-21",
             end_date="2025-09-21",
             practitioner_reference="Practitioner/789",
             status=None,
         )
 
-    @patch("src.main.appointment_service")
     def test_get_appointments_with_status_filter(
-        self, mock_service, test_client, sample_appointment
+        self, test_client, sample_appointment
     ):
         """Test appointment retrieval with status filter."""
         # Setup mock
-        mock_service.search_appointments = AsyncMock(return_value= [sample_appointment])
+        _mock_appointment_service.search_appointments = AsyncMock(return_value= [sample_appointment])
 
         # Make request
         response = test_client.get(
@@ -232,7 +225,7 @@ class TestAppointmentsEndpoint:
         assert data["status"] == "success"
 
         # Verify service called with search_appointments (no date range)
-        mock_service.search_appointments.assert_called_once_with(
+        _mock_appointment_service.search_appointments.assert_called_once_with(
             practitioner_reference="Practitioner/789", status="booked"
         )
 
@@ -247,13 +240,12 @@ class TestAppointmentsEndpoint:
         assert response.status_code == 400
         assert "start_date must be in YYYY-MM-DD format" in response.json()["detail"]
 
-    @patch("src.main.appointment_service")
     def test_get_appointments_no_filters(
-        self, mock_service, test_client, sample_appointment
+        self, test_client, sample_appointment
     ):
         """Test appointment retrieval with no filters."""
         # Setup mock
-        mock_service.search_appointments = AsyncMock(return_value= [sample_appointment])
+        _mock_appointment_service.search_appointments = AsyncMock(return_value= [sample_appointment])
 
         # Make request
         response = test_client.get("/api/v1/appointments")
@@ -264,7 +256,7 @@ class TestAppointmentsEndpoint:
         assert data["status"] == "success"
 
         # Verify service called with no filters
-        mock_service.search_appointments.assert_called_once_with(
+        _mock_appointment_service.search_appointments.assert_called_once_with(
             practitioner_reference=None, status=None
         )
 
@@ -272,11 +264,10 @@ class TestAppointmentsEndpoint:
 class TestProvidersEndpoint:
     """Test GET /api/v1/providers endpoint."""
 
-    @patch("src.main.provider_schedule_service")
-    def test_get_providers_success(self, mock_service, test_client, sample_provider):
+    def test_get_providers_success(self, test_client, sample_provider):
         """Test successful retrieval of providers."""
         # Setup mock
-        mock_service.get_providers = AsyncMock(return_value= [sample_provider])
+        _mock_provider_schedule_service.get_providers = AsyncMock(return_value= [sample_provider])
 
         # Make request
         response = test_client.get("/api/v1/providers")
@@ -294,10 +285,9 @@ class TestProvidersEndpoint:
         assert provider["reference"] == "Practitioner/provider-789"
 
         # Verify service called
-        mock_service.get_providers.assert_called_once()
+        _mock_provider_schedule_service.get_providers.assert_called_once()
 
-    @patch("src.main.provider_schedule_service")
-    def test_get_providers_filters_inactive(self, mock_service, test_client):
+    def test_get_providers_filters_inactive(self, test_client):
         """Test that inactive providers are filtered out."""
         # Create inactive provider
         inactive_provider_data = {
@@ -308,7 +298,7 @@ class TestProvidersEndpoint:
         inactive_provider = Provider(inactive_provider_data)
 
         # Setup mock
-        mock_service.get_providers = AsyncMock(return_value= [inactive_provider])
+        _mock_provider_schedule_service.get_providers = AsyncMock(return_value= [inactive_provider])
 
         # Make request
         response = test_client.get("/api/v1/providers")
@@ -320,11 +310,10 @@ class TestProvidersEndpoint:
         assert data["total"] == 0
         assert len(data["providers"]) == 0
 
-    @patch("src.main.provider_schedule_service")
-    def test_get_providers_service_error(self, mock_service, test_client):
+    def test_get_providers_service_error(self, test_client):
         """Test handling of provider service errors."""
         # Setup mock
-        mock_service.get_providers.side_effect = ProviderScheduleError(
+        _mock_provider_schedule_service.get_providers.side_effect = ProviderScheduleError(
             "Provider service unavailable"
         )
 
@@ -442,13 +431,12 @@ class TestAppointmentAPIAuditLogging:
     """Test audit logging for appointment API endpoints."""
 
     @patch("src.main.audit_logger")
-    @patch("src.main.appointment_service")
     def test_audit_logging_appointments_today(
-        self, mock_service, mock_audit_logger, test_client, sample_appointment
+        self, mock_audit_logger, test_client, sample_appointment
     ):
         """Test audit logging for today's appointments endpoint."""
         # Setup mock
-        mock_service.get_appointments_today = AsyncMock(return_value= [sample_appointment])
+        _mock_appointment_service.get_appointments_today = AsyncMock(return_value=[sample_appointment])
 
         # Make request
         response = test_client.get("/api/v1/appointments/today")
@@ -467,13 +455,12 @@ class TestAppointmentAPIAuditLogging:
         assert "appointments_today_completed" in logged_events
 
     @patch("src.main.audit_logger")
-    @patch("src.main.provider_schedule_service")
     def test_audit_logging_providers(
-        self, mock_service, mock_audit_logger, test_client, sample_provider
+        self, mock_audit_logger, test_client, sample_provider
     ):
         """Test audit logging for providers endpoint."""
         # Setup mock
-        mock_service.get_providers = AsyncMock(return_value= [sample_provider])
+        _mock_provider_schedule_service.get_providers = AsyncMock(return_value=[sample_provider])
 
         # Make request
         response = test_client.get("/api/v1/providers")
