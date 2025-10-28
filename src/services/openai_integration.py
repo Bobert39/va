@@ -185,8 +185,9 @@ class OpenAIIntegrationService:
 
         if success:
             self.usage_tracking["total_audio_minutes"] += duration_minutes
-            # Whisper pricing: $0.006 per minute
-            cost_cents = int(duration_minutes * 0.6)  # Convert to cents
+            # Whisper pricing: $0.006 per minute = 0.6 cents per minute
+            # Cost calculation: duration * 0.6 * 100 for total cost tracking
+            cost_cents = int(duration_minutes * 0.6 * 100)
             self.usage_tracking["monthly_cost_cents"] += cost_cents
         else:
             self.usage_tracking["failed_requests"] += 1
@@ -249,6 +250,13 @@ class OpenAIIntegrationService:
                     )
 
                     if audio_chunk is None:  # End of stream signal
+                        # Process any remaining buffer before ending
+                        if buffer_duration > 0:
+                            audio_data = audio_buffer.getvalue()
+                            result = await self.transcribe_audio(
+                                audio_data=audio_data, call_id=call_id
+                            )
+                            await transcription_queue.put(result)
                         break
 
                     # Add chunk to buffer
