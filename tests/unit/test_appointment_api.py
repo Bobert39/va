@@ -102,8 +102,8 @@ class TestAppointmentTodayEndpoint:
         self, mock_service, test_client, sample_appointment
     ):
         """Test successful retrieval of today's appointments."""
-        # Setup mock
-        mock_service.get_appointments_today.return_value = [sample_appointment]
+        # Setup mock - needs to be AsyncMock for awaitable
+        mock_service.get_appointments_today = AsyncMock(return_value=[sample_appointment])
 
         # Make request
         response = test_client.get("/api/v1/appointments/today")
@@ -128,7 +128,7 @@ class TestAppointmentTodayEndpoint:
     def test_get_appointments_today_empty(self, mock_service, test_client):
         """Test retrieval when no appointments exist."""
         # Setup mock
-        mock_service.get_appointments_today.return_value = []
+        mock_service.get_appointments_today = AsyncMock(return_value= [])
 
         # Make request
         response = test_client.get("/api/v1/appointments/today")
@@ -144,8 +144,8 @@ class TestAppointmentTodayEndpoint:
     def test_get_appointments_today_service_error(self, mock_service, test_client):
         """Test handling of appointment service errors."""
         # Setup mock
-        mock_service.get_appointments_today.side_effect = FHIRAppointmentError(
-            "FHIR service unavailable"
+        mock_service.get_appointments_today = AsyncMock(
+            side_effect=FHIRAppointmentError("FHIR service unavailable")
         )
 
         # Make request
@@ -168,7 +168,7 @@ class TestAppointmentsEndpoint:
     ):
         """Test appointment retrieval with date range filters."""
         # Setup mock
-        mock_service.get_appointments_by_date_range.return_value = [sample_appointment]
+        mock_service.get_appointments_by_date_range = AsyncMock(return_value= [sample_appointment])
 
         # Make request
         response = test_client.get(
@@ -200,7 +200,7 @@ class TestAppointmentsEndpoint:
     ):
         """Test appointment retrieval with status filter."""
         # Setup mock
-        mock_service.search_appointments.return_value = [sample_appointment]
+        mock_service.search_appointments = AsyncMock(return_value= [sample_appointment])
 
         # Make request
         response = test_client.get(
@@ -235,7 +235,7 @@ class TestAppointmentsEndpoint:
     ):
         """Test appointment retrieval with no filters."""
         # Setup mock
-        mock_service.search_appointments.return_value = [sample_appointment]
+        mock_service.search_appointments = AsyncMock(return_value= [sample_appointment])
 
         # Make request
         response = test_client.get("/api/v1/appointments")
@@ -258,7 +258,7 @@ class TestProvidersEndpoint:
     def test_get_providers_success(self, mock_service, test_client, sample_provider):
         """Test successful retrieval of providers."""
         # Setup mock
-        mock_service.get_providers.return_value = [sample_provider]
+        mock_service.get_providers = AsyncMock(return_value= [sample_provider])
 
         # Make request
         response = test_client.get("/api/v1/providers")
@@ -290,7 +290,7 @@ class TestProvidersEndpoint:
         inactive_provider = Provider(inactive_provider_data)
 
         # Setup mock
-        mock_service.get_providers.return_value = [inactive_provider]
+        mock_service.get_providers = AsyncMock(return_value= [inactive_provider])
 
         # Make request
         response = test_client.get("/api/v1/providers")
@@ -430,7 +430,7 @@ class TestAppointmentAPIAuditLogging:
     ):
         """Test audit logging for today's appointments endpoint."""
         # Setup mock
-        mock_service.get_appointments_today.return_value = [sample_appointment]
+        mock_service.get_appointments_today = AsyncMock(return_value= [sample_appointment])
 
         # Make request
         response = test_client.get("/api/v1/appointments/today")
@@ -455,7 +455,7 @@ class TestAppointmentAPIAuditLogging:
     ):
         """Test audit logging for providers endpoint."""
         # Setup mock
-        mock_service.get_providers.return_value = [sample_provider]
+        mock_service.get_providers = AsyncMock(return_value= [sample_provider])
 
         # Make request
         response = test_client.get("/api/v1/providers")
