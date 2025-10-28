@@ -19,6 +19,9 @@ slowapi = "^0.1.9"
 twilio = "^9.8.1"
 openai = "^1.108.1"
 pydantic-settings = "^2.10.1"
+sounddevice = "^0.4.6"
+soundfile = "^0.12.1"
+numpy = "^1.24.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4.0"
