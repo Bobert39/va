@@ -72,8 +72,12 @@ class TestOpenAIIntegrationService:
             "create",
             side_effect=Exception("API Error"),
         ):
-            with patch("tempfile.NamedTemporaryFile") as mock_temp:
+            with patch("tempfile.NamedTemporaryFile") as mock_temp, \
+                 patch("builtins.open", create=True) as mock_open:
                 mock_temp.return_value.__enter__.return_value.name = "test.wav"
+                mock_temp.return_value.__enter__.return_value.write = Mock()
+                mock_temp.return_value.__enter__.return_value.flush = Mock()
+                mock_open.return_value = Mock()
 
                 result = await service.transcribe_audio(
                     audio_data=audio_data, call_id="test_call_123"

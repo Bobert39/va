@@ -285,18 +285,17 @@ class TestDateTimeParser:
 
     def test_past_date_handling(self):
         """Test handling of past dates."""
-        with patch("src.services.datetime_parser.datetime") as mock_dt, patch(
-            "src.services.datetime_parser.date"
-        ) as mock_date:
+        with patch("src.services.datetime_parser.datetime") as mock_dt:
             mock_now = datetime(2024, 6, 15, 14, 30)  # June 15, 2024
             mock_dt.now.return_value = mock_now
-            mock_date.today.return_value = mock_now.date()
 
             # Mock datetime.combine to return actual datetime
             def mock_combine(date_part, time_part):
                 return datetime.combine(date_part, time_part)
 
             mock_dt.combine = mock_combine
+            # Allow date() constructor to work normally
+            mock_dt.side_effect = lambda *args, **kwargs: datetime(*args, **kwargs)
 
             # Test past month in same year - should assume next year
             result = self.parser.parse_datetime("I want an appointment on January 15th")
