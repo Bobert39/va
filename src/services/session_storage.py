@@ -10,8 +10,8 @@ import os
 from datetime import datetime, timedelta
 from typing import Any, Dict, Optional
 
-import aioredis
-from aioredis import Redis
+import redis.asyncio as redis
+from redis.asyncio import Redis
 
 
 class SessionStorage:
@@ -32,7 +32,7 @@ class SessionStorage:
     async def connect(self):
         """Connect to Redis."""
         if not self._redis:
-            self._redis = await aioredis.from_url(
+            self._redis = await redis.from_url(
                 self.redis_url, decode_responses=True, encoding="utf-8"
             )
 
@@ -56,12 +56,12 @@ class SessionStorage:
         Returns:
             True if successful, False otherwise
         """
-        await self.connect()
-
         key = f"{self._key_prefix}{state}"
         ttl = ttl or self._ttl
 
         try:
+            await self.connect()
+
             # Add timestamp if not present
             if "timestamp" not in data:
                 data["timestamp"] = datetime.utcnow().isoformat()
@@ -87,11 +87,10 @@ class SessionStorage:
         Returns:
             Session data if found, None otherwise
         """
-        await self.connect()
-
         key = f"{self._key_prefix}{state}"
 
         try:
+            await self.connect()
             json_data = await self._redis.get(key)
 
             if json_data:
@@ -112,11 +111,10 @@ class SessionStorage:
         Returns:
             True if successful, False otherwise
         """
-        await self.connect()
-
         key = f"{self._key_prefix}{state}"
 
         try:
+            await self.connect()
             result = await self._redis.delete(key)
             return result > 0
 
@@ -134,11 +132,10 @@ class SessionStorage:
         Returns:
             True if session exists, False otherwise
         """
-        await self.connect()
-
         key = f"{self._key_prefix}{state}"
 
         try:
+            await self.connect()
             return await self._redis.exists(key) > 0
 
         except Exception as e:
@@ -156,11 +153,10 @@ class SessionStorage:
         Returns:
             True if successful, False otherwise
         """
-        await self.connect()
-
         key = f"{self._key_prefix}{state}"
 
         try:
+            await self.connect()
             result = await self._redis.expire(key, ttl)
             return result
 

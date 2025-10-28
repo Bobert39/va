@@ -36,7 +36,7 @@ class TestSessionStorage:
         state = "test_state_12345"
 
         # Mock Redis operations
-        with patch("aioredis.from_url") as mock_redis_factory:
+        with patch("redis.asyncio.from_url") as mock_redis_factory:
             mock_redis = AsyncMock()
             mock_redis_factory.return_value = mock_redis
             session_storage._redis = mock_redis  # Pre-set to avoid connection
@@ -72,7 +72,7 @@ class TestSessionStorage:
         """Test updating session timeout."""
         state = "test_state_timeout"
 
-        with patch("aioredis.from_url") as mock_redis_factory:
+        with patch("redis.asyncio.from_url") as mock_redis_factory:
             mock_redis = AsyncMock()
             mock_redis_factory.return_value = mock_redis
             session_storage._redis = mock_redis  # Pre-set to avoid connection
@@ -90,7 +90,7 @@ class TestSessionStorage:
         test_storage = SessionStorage()
         state = "test_state_failure"
 
-        with patch("aioredis.from_url") as mock_redis_factory:
+        with patch("redis.asyncio.from_url") as mock_redis_factory:
             mock_redis_factory.side_effect = ConnectionError("Redis unavailable")
 
             # Operations should return False on connection failure
@@ -106,7 +106,7 @@ class TestSessionStorage:
     @pytest.mark.asyncio
     async def test_health_check(self, session_storage):
         """Test Redis health check."""
-        with patch("aioredis.from_url") as mock_redis_factory:
+        with patch("redis.asyncio.from_url") as mock_redis_factory:
             mock_redis = AsyncMock()
             mock_redis_factory.return_value = mock_redis
             session_storage._redis = mock_redis  # Pre-set to avoid connection
@@ -128,7 +128,7 @@ class TestSessionStorage:
         state = "test_state_timestamp"
         data_without_timestamp = {"code_verifier": "test_verifier"}
 
-        with patch("aioredis.from_url") as mock_redis_factory:
+        with patch("redis.asyncio.from_url") as mock_redis_factory:
             mock_redis = AsyncMock()
             mock_redis_factory.return_value = mock_redis
             session_storage._redis = mock_redis  # Pre-set to avoid connection
@@ -274,7 +274,7 @@ class TestSessionStorageEdgeCases:
         session_storage = SessionStorage()
         state = "invalid_json_state"
 
-        with patch("aioredis.from_url") as mock_redis_factory:
+        with patch("redis.asyncio.from_url") as mock_redis_factory:
             mock_redis = AsyncMock()
             mock_redis_factory.return_value = mock_redis
             session_storage._redis = mock_redis  # Pre-set to avoid connection
@@ -292,7 +292,7 @@ class TestSessionStorageEdgeCases:
         state = "exception_state"
         data = {"test": "data"}
 
-        with patch("aioredis.from_url") as mock_redis_factory:
+        with patch("redis.asyncio.from_url") as mock_redis_factory:
             mock_redis = AsyncMock()
             mock_redis_factory.return_value = mock_redis
             session_storage._redis = mock_redis  # Pre-set to avoid connection
@@ -325,7 +325,7 @@ class TestSessionStorageEdgeCases:
         state = "persistent_state"
         data = {"code_verifier": "persistent_verifier"}
 
-        with patch("aioredis.from_url") as mock_redis_factory:
+        with patch("redis.asyncio.from_url") as mock_redis_factory:
             mock_redis = AsyncMock()
             mock_redis_factory.return_value = mock_redis
             session_storage._redis = mock_redis  # Pre-set to avoid connection
@@ -353,7 +353,7 @@ class TestSessionStorageEdgeCases:
         state = "shared_state"
         data = {"code_verifier": "shared_verifier"}
 
-        with patch("aioredis.from_url") as mock_redis_factory:
+        with patch("redis.asyncio.from_url") as mock_redis_factory:
             mock_redis = AsyncMock()
             mock_redis_factory.return_value = mock_redis
 
