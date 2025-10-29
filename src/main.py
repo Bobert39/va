@@ -141,6 +141,29 @@ fhir_patient_service = FHIRPatientService(oauth_client)
 provider_schedule_service = ProviderScheduleService(oauth_client)
 appointment_service = FHIRAppointmentService(oauth_client)
 
+
+# Dependency functions for FastAPI injection
+# These allow tests to override services using app.dependency_overrides
+def get_oauth_client():
+    """Get OAuth client dependency for dependency injection."""
+    return oauth_client
+
+
+def get_appointment_service():
+    """Get appointment service dependency for dependency injection."""
+    return appointment_service
+
+
+def get_patient_service():
+    """Get patient service dependency for dependency injection."""
+    return fhir_patient_service
+
+
+def get_provider_schedule_service():
+    """Get provider schedule service dependency for dependency injection."""
+    return provider_schedule_service
+
+
 # Initialize dashboard service (conditionally)
 dashboard_service = None
 try:
@@ -1936,7 +1959,10 @@ async def search_patients_post(request: Request, search_request: PatientSearchRe
 
 @app.get("/api/v1/appointments/today", response_model=AppointmentListResponse)
 @limiter.limit("30/minute")
-async def get_appointments_today(request: Request):
+async def get_appointments_today(
+    request: Request,
+    appointment_service: FHIRAppointmentService = Depends(get_appointment_service),
+):
     """
     Get today's appointments.
 
@@ -2021,6 +2047,7 @@ async def get_appointments(
     end_date: str = "",
     provider: str = "",
     status: str = "",
+    appointment_service: FHIRAppointmentService = Depends(get_appointment_service),
 ):
     """
     Get appointments with optional filtering.
@@ -2247,6 +2274,7 @@ async def get_ai_scheduled_appointments(
         None, description="Filter by status (confirmed|pending|failed)"
     ),
     current_user: str = Depends(verify_dashboard_credentials),
+    appointment_service: FHIRAppointmentService = Depends(get_appointment_service),
 ):
     """
     Get AI-scheduled appointments with filtering options.
@@ -2372,6 +2400,7 @@ async def export_appointments(
     date_to: Optional[str] = Query(None, description="End date (ISO format)"),
     provider_id: Optional[str] = Query(None, description="Filter by provider ID"),
     current_user: str = Depends(verify_dashboard_credentials),
+    appointment_service: FHIRAppointmentService = Depends(get_appointment_service),
 ):
     """
     Export appointment data in CSV or PDF format.
@@ -2451,7 +2480,9 @@ async def export_appointments(
 @app.get("/api/v1/appointments/analytics")
 @limiter.limit("30/minute")
 async def get_appointment_analytics(
-    request: Request, current_user: str = Depends(verify_dashboard_credentials)
+    request: Request,
+    current_user: str = Depends(verify_dashboard_credentials),
+    appointment_service: FHIRAppointmentService = Depends(get_appointment_service),
 ):
     """
     Get appointment analytics and statistics.
@@ -2529,7 +2560,10 @@ class BulkAppointmentRequest(BaseModel):
 @app.put("/api/v1/appointments/{appointment_id}")
 @limiter.limit("30/minute")
 async def update_appointment(
-    request: Request, appointment_id: str, update_request: AppointmentUpdateRequest
+    request: Request,
+    appointment_id: str,
+    update_request: AppointmentUpdateRequest,
+    appointment_service: FHIRAppointmentService = Depends(get_appointment_service),
 ):
     """
     Update appointment details with EMR synchronization.
@@ -2632,7 +2666,10 @@ async def update_appointment(
 @app.delete("/api/v1/appointments/{appointment_id}")
 @limiter.limit("20/minute")
 async def cancel_appointment(
-    request: Request, appointment_id: str, cancel_request: AppointmentCancelRequest
+    request: Request,
+    appointment_id: str,
+    cancel_request: AppointmentCancelRequest,
+    appointment_service: FHIRAppointmentService = Depends(get_appointment_service),
 ):
     """
     Cancel appointment with EMR notification.
@@ -2738,7 +2775,9 @@ async def cancel_appointment(
 @app.post("/api/v1/appointments/manual")
 @limiter.limit("20/minute")
 async def create_manual_appointment(
-    request: Request, manual_request: ManualAppointmentRequest
+    request: Request,
+    manual_request: ManualAppointmentRequest,
+    appointment_service: FHIRAppointmentService = Depends(get_appointment_service),
 ):
     """
     Create manual appointment.
@@ -2846,7 +2885,10 @@ async def create_manual_appointment(
 @app.post("/api/v1/appointments/{appointment_id}/override")
 @limiter.limit("10/minute")
 async def override_appointment_conflicts(
-    request: Request, appointment_id: str, override_request: ConflictOverrideRequest
+    request: Request,
+    appointment_id: str,
+    override_request: ConflictOverrideRequest,
+    appointment_service: FHIRAppointmentService = Depends(get_appointment_service),
 ):
     """
     Override appointment conflicts.
@@ -2950,7 +2992,9 @@ async def override_appointment_conflicts(
 @app.post("/api/v1/appointments/bulk")
 @limiter.limit("5/minute")
 async def bulk_appointment_operations(
-    request: Request, bulk_request: BulkAppointmentRequest
+    request: Request,
+    bulk_request: BulkAppointmentRequest,
+    appointment_service: FHIRAppointmentService = Depends(get_appointment_service),
 ):
     """
     Bulk appointment operations.

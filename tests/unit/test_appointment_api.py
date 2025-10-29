@@ -17,21 +17,20 @@ os.environ["ALLOW_DEV_DEFAULTS"] = "true"
 os.environ["DASHBOARD_USERNAME"] = "test_user"
 os.environ["DASHBOARD_PASSWORD"] = "test_password_123"
 
-# Import the app first
-from src.main import app
-import src.main
+# Import the app and dependency functions
+from src.main import (
+    app,
+    get_appointment_service,
+    get_oauth_client,
+    get_patient_service,
+    get_provider_schedule_service,
+)
 
-# Now replace the services with mocks after import
+# Create module-level mock services that we'll use with dependency overrides
 _mock_oauth_client = Mock()
 _mock_patient_service = Mock()
 _mock_provider_schedule_service = Mock()
 _mock_appointment_service = Mock()
-
-# Replace the actual service instances
-src.main.oauth_client = _mock_oauth_client
-src.main.fhir_patient_service = _mock_patient_service
-src.main.provider_schedule_service = _mock_provider_schedule_service
-src.main.appointment_service = _mock_appointment_service
 
 from src.services.appointment import (
     Appointment,
@@ -47,8 +46,29 @@ from src.services.provider_schedule import (
 
 @pytest.fixture
 def test_client():
-    """Test client for FastAPI app."""
-    return TestClient(app)
+    """Test client for FastAPI app with dependency overrides."""
+    # Override FastAPI dependencies with mocks
+    app.dependency_overrides[get_oauth_client] = lambda: _mock_oauth_client
+    app.dependency_overrides[get_patient_service] = lambda: _mock_patient_service
+    app.dependency_overrides[get_provider_schedule_service] = lambda: _mock_provider_schedule_service
+    app.dependency_overrides[get_appointment_service] = lambda: _mock_appointment_service
+
+    # Disable rate limiting middleware for tests by removing SlowAPIMiddleware
+    # Save original middleware
+    original_middleware = list(app.user_middleware)
+
+    # Remove SlowAPIMiddleware
+    app.user_middleware = [m for m in app.user_middleware if m.cls.__name__ != "SlowAPIMiddleware"]
+    app.middleware_stack = None  # Force rebuild
+    app.build_middleware_stack()
+
+    yield TestClient(app)
+
+    # Restore middleware and clean up overrides
+    app.user_middleware = original_middleware
+    app.middleware_stack = None
+    app.build_middleware_stack()
+    app.dependency_overrides.clear()
 
 
 @pytest.fixture
